@@ -17,29 +17,12 @@ enum Rank {
     King,
 }
 
-impl Rank {
-    fn get_score(&self) -> u8 {
-        match *self {
-            Rank::Ace => 1,
-            Rank::Pip(num) => num,
-            _ => 10,
-        }
-    }
-}
-
 type Hand = Vec<Card>;
 
 #[derive(Debug)]
 struct Card {
     suit: Suit,
     rank: Rank,
-}
-
-struct Game {
-    player_hand: Hand,
-    player_score: u8,
-    dealer_hand: Hand,
-    dealer_score: u8,
 }
 
 impl Card {
@@ -63,6 +46,69 @@ impl Card {
 
         Card { suit, rank }
     }
+
+    fn get_score(&self) -> u8 {
+        match self.rank {
+            Rank::Ace => 11,
+            Rank::Pip(num) => num,
+            Rank::Jack => 10,
+            Rank::Queen => 10,
+            Rank::King => 10,
+        }
+    }
+}
+
+struct Player {
+    hand: Hand,
+    score: u8,
+}
+
+struct Round {
+    player: Player,
+    dealer: Player,
+}
+
+impl Round {
+    fn new() -> Self {
+        // Initialize new player
+        let hand = vec![Card::new(), Card::new()];
+        let score = hand.iter().fold(0, |score, card| score + card.get_score());
+        let player = Player { hand, score };
+
+        // Initialize dealer
+        let hand = vec![Card::new(), Card::new()];
+        let score = hand.iter().fold(0, |score, card| score + card.get_score());
+        let dealer = Player { hand, score };
+
+        Self { player, dealer }
+    }
+
+    fn hit_me(&mut self) -> u8 {
+        let card = Card::new();
+        self.player.score += card.get_score();
+        self.player.hand.push(card);
+        self.player.score
+    }
+}
+
+struct Game {
+    bank: u32,
+    active_bet: u32,
+}
+
+impl Game {
+    fn new(bank: u32) -> Self {
+        Self { bank, active_bet: 0 }
+    }
+
+    fn place_bet(&mut self, amt: u32) {
+        if amt > self.bank {
+            self.active_bet = self.bank;
+            println!("Bet is larger than remaining chips.")
+        } else {
+            self.active_bet += amt;
+        }
+    }
 }
 
 #[cfg(test)]
@@ -72,7 +118,7 @@ mod test {
     fn initial_deal() {
         let cards: Hand = vec![Card::new(), Card::new()];
         for card in cards {
-            let score = card.rank.get_score();
+            let score = card.get_score();
             assert!(score > 0 && score <= 10);
         }
     }
