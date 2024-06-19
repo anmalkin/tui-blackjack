@@ -119,8 +119,9 @@ impl Round {
 
     fn hit(&mut self) {
         self.player.push(Card::new());
+
+        // State cannot be Blackjack after initial draw
         self.result = match calc_score(&self.player) {
-            21 => GameResult::Blackjack,
             (22..) => GameResult::Bust,
             num => GameResult::Score(num),
         };
