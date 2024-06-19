@@ -22,6 +22,7 @@ enum Rank {
     King,
 }
 
+#[derive(Debug)]
 enum GameResult {
     Blackjack,
     Score(u8),
@@ -155,7 +156,59 @@ impl Game {
 mod test {
     use super::*;
     #[test]
-    fn initial_deal() {
-        todo!()
+    fn calc_score_test() {
+        let hand = vec![
+            Card { suit: Suit::Clubs, rank: Rank::Jack },
+            Card { suit: Suit::Diamonds, rank: Rank::Queen },
+        ];
+        assert_eq!(calc_score(&hand), 20);
+
+        let hand = vec![
+            Card { suit: Suit::Clubs, rank: Rank::Ace },
+            Card { suit: Suit::Diamonds, rank: Rank::Queen },
+        ];
+        assert_eq!(calc_score(&hand), 21);
+
+        let hand = vec![
+            Card { suit: Suit::Clubs, rank: Rank::Ace },
+            Card { suit: Suit::Diamonds, rank: Rank::Ace },
+        ];
+        assert_eq!(calc_score(&hand), 12);
+
+        let hand = vec![
+            Card { suit: Suit::Clubs, rank: Rank::Pip(8) },
+            Card { suit: Suit::Diamonds, rank: Rank::Pip(10) },
+        ];
+        assert_eq!(calc_score(&hand), 18);
+    }
+
+    #[test]
+    fn calc_score_test_hard() {
+        let hand = vec![
+            Card { suit: Suit::Clubs, rank: Rank::Pip(8) },
+            Card { suit: Suit::Diamonds, rank: Rank::Pip(10) },
+            Card { suit: Suit::Spades, rank: Rank::Ace },
+            Card { suit: Suit::Spades, rank: Rank::Ace },
+            Card { suit: Suit::Spades, rank: Rank::Ace },
+        ];
+        assert_eq!(calc_score(&hand), 21);
+
+        let hand = vec![
+            Card { suit: Suit::Clubs, rank: Rank::Pip(8) },
+            Card { suit: Suit::Diamonds, rank: Rank::Pip(10) },
+            Card { suit: Suit::Spades, rank: Rank::Ace },
+            Card { suit: Suit::Diamonds, rank: Rank::Ace },
+            Card { suit: Suit::Clubs, rank: Rank::Ace },
+            Card { suit: Suit::Clubs, rank: Rank::Ace },
+        ];
+        assert_eq!(calc_score(&hand), 22);
+
+        let hand = vec![
+            Card { suit: Suit::Clubs, rank: Rank::Pip(3) },
+            Card { suit: Suit::Clubs, rank: Rank::Ace },
+            Card { suit: Suit::Clubs, rank: Rank::Jack },
+            Card { suit: Suit::Spades, rank: Rank::Jack },
+        ];
+        assert_eq!(calc_score(&hand), 24);
     }
 }
