@@ -1,5 +1,10 @@
 #![allow(dead_code, unused_imports)]
 
+const BLACKJACK: u8 = 21;
+const FACECARD: u8 = 10;
+const ACE_HIGH: u8 = 11;
+const ACE_LOW: u8 = 1;
+
 #[derive(Debug)]
 enum Suit {
     Hearts,
@@ -17,7 +22,46 @@ enum Rank {
     King,
 }
 
+enum GameResult {
+    Blackjack,
+    Score(u8),
+    Bust,
+}
+
 type Hand = Vec<Card>;
+
+fn calc_score(hand: &Hand) -> u8 {
+    let mut aces = 0;
+    let mut score = 0;
+    for card in hand.iter() {
+        match card.rank {
+            Rank::Ace => {
+                aces += 1;
+                score += ACE_HIGH;
+            }
+            Rank::Pip(num) => {
+                score += num;
+            }
+            Rank::Jack => {
+                score += FACECARD;
+            }
+            Rank::Queen => {
+                score += FACECARD;
+            }
+            Rank::King => {
+                score += FACECARD;
+            }
+        }
+    }
+
+    // Adjust Aces value downward if necessary
+    while score > BLACKJACK && aces > 0 {
+        score -= ACE_HIGH - ACE_LOW; // note operator precedence
+        aces -= 1;
+        assert!(score >= 2);
+    }
+    score
+}
 
 #[derive(Debug)]
 struct Card {
@@ -46,48 +90,40 @@ impl Card {
 
         Card { suit, rank }
     }
-
-    fn get_score(&self) -> u8 {
-        match self.rank {
-            Rank::Ace => 11,
-            Rank::Pip(num) => num,
-            Rank::Jack => 10,
-            Rank::Queen => 10,
-            Rank::King => 10,
-        }
-    }
-}
-
-struct Player {
-    hand: Hand,
-    score: u8,
 }
 
 struct Round {
-    player: Player,
-    dealer: Player,
+    player: Hand,
+    dealer: Hand,
+    result: GameResult,
 }
 
 impl Round {
     fn new() -> Self {
         // Initialize new player
-        let hand = vec![Card::new(), Card::new()];
-        let score = hand.iter().fold(0, |score, card| score + card.get_score());
-        let player = Player { hand, score };
+        let player = vec![Card::new(), Card::new()];
+        let result = match calc_score(&player) {
+            21 => GameResult::Blackjack,
+            num => GameResult::Score(num),
+        };
 
         // Initialize dealer
-        let hand = vec![Card::new(), Card::new()];
-        let score = hand.iter().fold(0, |score, card| score + card.get_score());
-        let dealer = Player { hand, score };
+        let dealer = vec![Card::new(), Card::new()];
 
-        Self { player, dealer }
+        Self {
+            player,
+            dealer,
+            result,
+        }
     }
 
-    fn hit_me(&mut self) -> u8 {
-        let card = Card::new();
-        self.player.score += card.get_score();
-        self.player.hand.push(card);
-        self.player.score
+    fn hit(&mut self) {
+        self.player.push(Card::new());
+        self.result = match calc_score(&self.player) {
+            21 => GameResult::Blackjack,
+            (22..) => GameResult::Bust,
+            num => GameResult::Score(num),
+        };
     }
 }
 
@@ -98,7 +134,10 @@ struct Game {
 
 impl Game {
     fn new(bank: u32) -> Self {
-        Self { bank, active_bet: 0 }
+        Self {
+            bank,
+            active_bet: 0,
+        }
     }
 
     fn place_bet(&mut self, amt: u32) {
@@ -116,10 +155,6 @@ mod test {
     use super::*;
     #[test]
     fn initial_deal() {
-        let cards: Hand = vec![Card::new(), Card::new()];
-        for card in cards {
-            let score = card.get_score();
-            assert!(score > 0 && score <= 10);
-        }
+        todo!()
     }
 }
