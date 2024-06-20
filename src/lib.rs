@@ -2,10 +2,16 @@
 
 pub mod utils;
 
+use core::{num, panic};
+use std::io::{self, Write};
+
+use crate::utils::get_user_number;
+
 const BLACKJACK: u8 = 21;
 const FACECARD: u8 = 10;
 const ACE_HIGH: u8 = 11;
 const ACE_LOW: u8 = 1;
+const MIN_BET: u32 = 5;
 
 #[derive(Debug)]
 enum Suit {
@@ -32,6 +38,38 @@ enum GameResult {
 }
 
 type Hand = Vec<Card>;
+
+/// Run blackjack game loop
+pub fn run_game_loop() {
+    let mut bank = 100;
+    let mut active_bet = 0;
+    'game: loop {
+        println!("Current bank balance is ${}", bank);
+        print!("Place bet (min: {}): ", MIN_BET);
+        io::stdout()
+            .flush()
+            .expect("Failed to print to screen. Exiting game...");
+        match get_user_number() {
+            Ok(num) => {
+                active_bet = num;
+            }
+            Err(_) => panic!("Error reading user input. Exiting game..."),
+        }
+
+        if active_bet < MIN_BET || active_bet > bank {
+            println!(
+                "Bet amount must be valid number of at least ${MIN_BET} and less than the total bank balance."
+            );
+            continue 'game;
+        }
+
+        // TODO: Implement rest of game loop
+
+        break;
+    }
+
+    // print!("Enter move. (h)it or (s)tay: ");
+}
 
 fn calc_score(hand: &Hand) -> u8 {
     let mut aces = 0;
@@ -129,6 +167,14 @@ impl Round {
             num => GameResult::Score(num),
         };
     }
+
+    fn run_dealer(&mut self) {
+        let mut dealer_score = calc_score(&self.dealer);
+        while dealer_score < 17 {
+            self.dealer.push(Card::new());
+            dealer_score = calc_score(&self.dealer);
+        }
+    }
 }
 
 struct Game {
@@ -137,9 +183,9 @@ struct Game {
 }
 
 impl Game {
-    fn new(bank: u32) -> Self {
+    fn new() -> Self {
         Self {
-            bank,
+            bank: 100,
             active_bet: 0,
         }
     }
@@ -160,26 +206,50 @@ mod test {
     #[test]
     fn calc_score_test() {
         let hand = vec![
-            Card { suit: Suit::Clubs, rank: Rank::Jack },
-            Card { suit: Suit::Diamonds, rank: Rank::Queen },
+            Card {
+                suit: Suit::Clubs,
+                rank: Rank::Jack,
+            },
+            Card {
+                suit: Suit::Diamonds,
+                rank: Rank::Queen,
+            },
         ];
         assert_eq!(calc_score(&hand), 20);
 
         let hand = vec![
-            Card { suit: Suit::Clubs, rank: Rank::Ace },
-            Card { suit: Suit::Diamonds, rank: Rank::Queen },
+            Card {
+                suit: Suit::Clubs,
+                rank: Rank::Ace,
+            },
+            Card {
+                suit: Suit::Diamonds,
+                rank: Rank::Queen,
+            },
         ];
         assert_eq!(calc_score(&hand), 21);
 
         let hand = vec![
-            Card { suit: Suit::Clubs, rank: Rank::Ace },
-            Card { suit: Suit::Diamonds, rank: Rank::Ace },
+            Card {
+                suit: Suit::Clubs,
+                rank: Rank::Ace,
+            },
+            Card {
+                suit: Suit::Diamonds,
+                rank: Rank::Ace,
+            },
         ];
         assert_eq!(calc_score(&hand), 12);
 
         let hand = vec![
-            Card { suit: Suit::Clubs, rank: Rank::Pip(8) },
-            Card { suit: Suit::Diamonds, rank: Rank::Pip(10) },
+            Card {
+                suit: Suit::Clubs,
+                rank: Rank::Pip(8),
+            },
+            Card {
+                suit: Suit::Diamonds,
+                rank: Rank::Pip(10),
+            },
         ];
         assert_eq!(calc_score(&hand), 18);
     }
@@ -187,29 +257,74 @@ mod test {
     #[test]
     fn calc_score_test_hard() {
         let hand = vec![
-            Card { suit: Suit::Clubs, rank: Rank::Pip(8) },
-            Card { suit: Suit::Diamonds, rank: Rank::Pip(10) },
-            Card { suit: Suit::Spades, rank: Rank::Ace },
-            Card { suit: Suit::Spades, rank: Rank::Ace },
-            Card { suit: Suit::Spades, rank: Rank::Ace },
+            Card {
+                suit: Suit::Clubs,
+                rank: Rank::Pip(8),
+            },
+            Card {
+                suit: Suit::Diamonds,
+                rank: Rank::Pip(10),
+            },
+            Card {
+                suit: Suit::Spades,
+                rank: Rank::Ace,
+            },
+            Card {
+                suit: Suit::Spades,
+                rank: Rank::Ace,
+            },
+            Card {
+                suit: Suit::Spades,
+                rank: Rank::Ace,
+            },
         ];
         assert_eq!(calc_score(&hand), 21);
 
         let hand = vec![
-            Card { suit: Suit::Clubs, rank: Rank::Pip(8) },
-            Card { suit: Suit::Diamonds, rank: Rank::Pip(10) },
-            Card { suit: Suit::Spades, rank: Rank::Ace },
-            Card { suit: Suit::Diamonds, rank: Rank::Ace },
-            Card { suit: Suit::Clubs, rank: Rank::Ace },
-            Card { suit: Suit::Clubs, rank: Rank::Ace },
+            Card {
+                suit: Suit::Clubs,
+                rank: Rank::Pip(8),
+            },
+            Card {
+                suit: Suit::Diamonds,
+                rank: Rank::Pip(10),
+            },
+            Card {
+                suit: Suit::Spades,
+                rank: Rank::Ace,
+            },
+            Card {
+                suit: Suit::Diamonds,
+                rank: Rank::Ace,
+            },
+            Card {
+                suit: Suit::Clubs,
+                rank: Rank::Ace,
+            },
+            Card {
+                suit: Suit::Clubs,
+                rank: Rank::Ace,
+            },
         ];
         assert_eq!(calc_score(&hand), 22);
 
         let hand = vec![
-            Card { suit: Suit::Clubs, rank: Rank::Pip(3) },
-            Card { suit: Suit::Clubs, rank: Rank::Ace },
-            Card { suit: Suit::Clubs, rank: Rank::Jack },
-            Card { suit: Suit::Spades, rank: Rank::Jack },
+            Card {
+                suit: Suit::Clubs,
+                rank: Rank::Pip(3),
+            },
+            Card {
+                suit: Suit::Clubs,
+                rank: Rank::Ace,
+            },
+            Card {
+                suit: Suit::Clubs,
+                rank: Rank::Jack,
+            },
+            Card {
+                suit: Suit::Spades,
+                rank: Rank::Jack,
+            },
         ];
         assert_eq!(calc_score(&hand), 24);
     }
