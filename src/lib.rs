@@ -3,7 +3,7 @@
 pub mod utils;
 
 use core::{num, panic};
-use std::io::{self, Write};
+use std::{fmt::Display, io::{self, Write}};
 
 use crate::utils::get_user_number;
 
@@ -130,6 +130,27 @@ impl Card {
         };
 
         Card { suit, rank }
+    }
+}
+
+impl Display for Card {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let rank = match self.rank {
+            Rank::Ace => String::from("Ace"),
+            Rank::Pip(num) => num.to_string(),
+            Rank::Jack => String::from("Jack"),
+            Rank::Queen => String::from("Queen"),
+            Rank::King => String::from("King"),
+        };
+
+        let suit = match self.suit {
+            Suit::Hearts => String::from("Hearts"),
+            Suit::Diamonds => String::from("Diamonds"),
+            Suit::Spades => String::from("Spades"),
+            Suit::Clubs => String::from("Clubs"),
+        };
+
+        write!(f, "[**{} of {}**]", rank, suit)
     }
 }
 
@@ -327,5 +348,16 @@ mod test {
             },
         ];
         assert_eq!(calc_score(&hand), 24);
+    }
+
+    #[test]
+    fn display_cards() {
+        let num_card = Card { suit: Suit::Clubs, rank: Rank::Pip(3) };
+        let face_card = Card { suit: Suit::Diamonds, rank: Rank::King };
+        let ace = Card { suit: Suit::Hearts, rank: Rank::Ace };
+
+        assert_eq!(num_card.to_string(), "[**3 of Clubs**]");
+        assert_eq!(face_card.to_string(), "[**King of Diamonds**]");
+        assert_eq!(ace.to_string(), "[**Ace of Hearts**]");
     }
 }
