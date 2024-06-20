@@ -1,5 +1,7 @@
 #![allow(dead_code, unused_imports)]
 
+pub mod utils;
+
 const BLACKJACK: u8 = 21;
 const FACECARD: u8 = 10;
 const ACE_HIGH: u8 = 11;
