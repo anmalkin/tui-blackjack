@@ -15,7 +15,8 @@ const BLACKJACK: u8 = 21;
 const FACECARD: u8 = 10;
 const ACE_HIGH: u8 = 11;
 const ACE_LOW: u8 = 1;
-const MIN_BET: u32 = 5;
+const PAYOUT: f32 = 1.0;
+const BLACKJACK_PAYOUT: f32 = 1.5;
 
 #[derive(Debug)]
 enum Suit {
@@ -50,6 +51,22 @@ enum Command {
 }
 
 type Hand = Vec<Card>;
+
+fn print_player_hand(hand: &[Card]) {
+    for card in hand {
+        println!("{card}");
+    }
+    println!("Score: {}", calc_score(hand));
+}
+
+fn print_dealer_hand(hand: &[Card]) {
+    for card in hand {
+        println!("{card}");
+        sleep(time::Duration::from_secs(2));
+    }
+    println!("Dealer score: {}", calc_score(hand));
+    sleep(time::Duration::from_secs(1));
+}
 
 /// Run blackjack game loop
 pub fn run_game_loop() {
