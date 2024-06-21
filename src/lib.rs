@@ -70,13 +70,17 @@ fn print_dealer_hand(hand: &[Card]) {
 
 /// Run blackjack game loop
 pub fn run_game_loop() {
-    let mut bank = 100;
+    let mut bank = 100.0;
     let mut user_command: String;
     let mut active_bet;
 
     'game: loop {
         println!("Current bank balance is ${}", bank);
-        print!("Place bet (min: {}): ", MIN_BET);
+        if bank <= 0.0 {
+            println!("You are out of money. Better luck next time!");
+            break;
+        }
+        print!("Place bet: ");
         io::stdout()
             .flush()
             .expect("Failed to print to screen. Exiting game...");
@@ -87,16 +91,27 @@ pub fn run_game_loop() {
             Err(_) => panic!("Error reading user input. Exiting game..."),
         }
 
-        if active_bet < MIN_BET || active_bet > bank {
+        if active_bet == 0.0 || active_bet > bank {
             println!(
-                "Bet amount must be valid number of at least ${MIN_BET} and less than the total bank balance."
+                "Bet amount must be valid number greater than 0 and less than the bank balance."
             );
             continue 'game;
         }
 
-        'round: loop {
-            // TODO: Display initial deal
+        display_new_round_msg();
+        let mut round = Round::new();
+        print_player_hand(round.player.as_ref());
+        if let GameResult::Blackjack = round.result {
+            let payout = active_bet * BLACKJACK_PAYOUT;
+            println!("Blackjack! +${}", payout);
+            bank += payout;
+            continue 'game;
+        }
+        println!("Dealer showing...");
+        sleep(time::Duration::from_secs(1));
+        println!("{}", round.dealer[0]);
 
+        'round: loop {
             print_input_command();
             match get_user_string() {
                 Ok(command) => user_command = command,
@@ -104,26 +119,64 @@ pub fn run_game_loop() {
             }
 
             match get_command(&user_command) {
-                Command::Hit => println!("Hit!"),
-                Command::Stay => println!("Staying put..."),
-                // TODO: Implement split functionality
-                Command::Split => println!("Split functionality not yet implemented"),
+                Command::Hit => {
+                    round.hit();
+                    println!("Your hand:");
+                    print_player_hand(round.player.as_ref());
+                    sleep(time::Duration::from_secs(1));
+                    println!("Dealer showing...");
+                    sleep(time::Duration::from_secs(1));
+                    println!("{}", round.dealer[0]);
+                    match round.result {
+                        GameResult::Bust => {
+                            println!("Bust! -${}", active_bet);
+                            bank -= active_bet;
+                            continue 'game;
+                        }
+                        GameResult::Score(_) => continue 'round,
+                        GameResult::Blackjack => println!("21!"),
+                    }
+                }
+                Command::Stay => {
+                    println!("Staying put...");
+                    round.run_dealer();
+                    let player_score = calc_score(round.player.as_ref());
+                    let dealer_score = calc_score(round.dealer.as_ref());
+                    print_dealer_hand(round.dealer.as_ref());
+                    if dealer_score > 21 {
+                        println!("Dealer busts! You win! +{}", active_bet);
+                        bank += active_bet;
+                        continue 'game;
+                    }
+                    match player_score.cmp(&dealer_score) {
+                        std::cmp::Ordering::Less => {
+                            println!("You lose! -${}", active_bet);
+                            bank -= active_bet;
+                        }
+                        std::cmp::Ordering::Equal => {
+                            println!("Draw! No payout");
+                        }
+                        std::cmp::Ordering::Greater => {
+                            println!("You win! +${}", active_bet);
+                            bank += active_bet;
+                        }
+                    }
+                    continue 'game;
+                }
+                Command::Split => {
+                    println!("Split functionality not yet implemented!");
+                    continue 'round;
+                }
                 Command::Invalid => {
                     print_invalid_command();
                     continue 'round;
                 }
             }
-
-            break;
         }
-
-        break;
     }
-
-    // print!("Enter move. (h)it or (s)tay: ");
 }
 
-fn calc_score(hand: &Hand) -> u8 {
+fn calc_score(hand: &[Card]) -> u8 {
     let mut aces = 0;
     let mut score = 0;
     for card in hand.iter() {
