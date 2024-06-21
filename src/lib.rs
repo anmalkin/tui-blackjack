@@ -3,10 +3,14 @@
 pub mod utils;
 
 use core::{num, panic};
-use std::{fmt::Display, io::{self, Write}};
+use std::{
+    fmt::Display,
+    io::{self, Write},
+};
 
-use crate::utils::get_user_number;
+use crate::utils::*;
 
+// Magic numbers
 const BLACKJACK: u8 = 21;
 const FACECARD: u8 = 10;
 const ACE_HIGH: u8 = 11;
@@ -37,12 +41,22 @@ enum GameResult {
     Bust,
 }
 
+#[derive(Debug)]
+enum Command {
+    Hit,
+    Stay,
+    Split,
+    Invalid,
+}
+
 type Hand = Vec<Card>;
 
 /// Run blackjack game loop
 pub fn run_game_loop() {
     let mut bank = 100;
-    let mut active_bet = 0;
+    let mut user_command: String;
+    let mut active_bet;
+
     'game: loop {
         println!("Current bank balance is ${}", bank);
         print!("Place bet (min: {}): ", MIN_BET);
@@ -63,7 +77,28 @@ pub fn run_game_loop() {
             continue 'game;
         }
 
-        // TODO: Implement rest of game loop
+        'round: loop {
+            // TODO: Display initial deal
+
+            print_input_command();
+            match get_user_string() {
+                Ok(command) => user_command = command,
+                Err(_) => panic!("Error reading user input. Exiting game..."),
+            }
+
+            match get_command(&user_command) {
+                Command::Hit => println!("Hit!"),
+                Command::Stay => println!("Staying put..."),
+                // TODO: Implement split functionality
+                Command::Split => println!("Split functionality not yet implemented"),
+                Command::Invalid => {
+                    print_invalid_command();
+                    continue 'round;
+                }
+            }
+
+            break;
+        }
 
         break;
     }
@@ -102,6 +137,16 @@ fn calc_score(hand: &Hand) -> u8 {
         assert!(score >= 2);
     }
     score
+}
+
+fn get_command(s: &str) -> Command {
+    match s {
+        "h" => Command::Hit,
+        "hit" => Command::Hit,
+        "s" => Command::Stay,
+        "stay" => Command::Stay,
+        _ => Command::Invalid,
+    }
 }
 
 #[derive(Debug)]
@@ -352,9 +397,18 @@ mod test {
 
     #[test]
     fn display_cards() {
-        let num_card = Card { suit: Suit::Clubs, rank: Rank::Pip(3) };
-        let face_card = Card { suit: Suit::Diamonds, rank: Rank::King };
-        let ace = Card { suit: Suit::Hearts, rank: Rank::Ace };
+        let num_card = Card {
+            suit: Suit::Clubs,
+            rank: Rank::Pip(3),
+        };
+        let face_card = Card {
+            suit: Suit::Diamonds,
+            rank: Rank::King,
+        };
+        let ace = Card {
+            suit: Suit::Hearts,
+            rank: Rank::Ace,
+        };
 
         assert_eq!(num_card.to_string(), "[**3 of Clubs**]");
         assert_eq!(face_card.to_string(), "[**King of Diamonds**]");

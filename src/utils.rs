@@ -1,5 +1,8 @@
-use std::{io::{self, Write}, time};
 use std::thread::sleep;
+use std::{
+    io::{self, Write},
+    time,
+};
 
 pub fn display_welcome_message() {
     println!("Welcome to command line blackjack!");
@@ -16,4 +19,21 @@ pub fn get_user_number() -> Result<u32, io::Error> {
     io::stdin().read_line(&mut input)?;
     let res = input.trim().parse().unwrap_or(0); // TODO: Better error handling
     Ok(res)
+}
+
+pub fn get_user_string() -> Result<String, io::Error> {
+    let mut input = String::new();
+    io::stdin().read_line(&mut input)?;
+    Ok(input.trim().to_string())
+}
+
+pub fn print_input_command() {
+    print!("Enter move. (h)it or (s)tay: ");
+    io::stdout()
+        .flush()
+        .expect("Failed to print to screen. Exiting game...");
+}
+
+pub fn print_invalid_command() {
+    println!("Invalid command. Please enter (s)tay or (h)it.");
 }
