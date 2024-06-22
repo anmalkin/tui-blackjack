@@ -1,6 +1,7 @@
 #![allow(dead_code, unused_imports)]
 
 pub mod utils;
+pub mod errors;
 
 use core::{num, panic};
 use std::{
