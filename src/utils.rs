@@ -4,38 +4,19 @@ pub use std::{
     time,
 };
 
-pub fn display_welcome_message() {
-    println!("Welcome to command line blackjack!");
-    sleep(time::Duration::from_secs(3));
-    println!("Type 'help' (or 'h') at any time for instructions. Enjoy!");
-    sleep(time::Duration::from_secs(3));
-    println!("Beginning new game...");
-    sleep(time::Duration::from_secs(2));
-}
+use crate::errors::CliError;
 
-pub fn display_new_round_msg() {
-    println!("Starting new round...");
-    sleep(time::Duration::from_secs(2));
-}
-
-pub fn get_user_number() -> Result<f32, io::Error> {
+pub fn get_float_from_stdin() -> Result<f32, CliError> {
     let mut input = String::new();
     io::stdin().read_line(&mut input)?;
-    let res = input.trim().parse().unwrap_or(0.0); // TODO: Better error handling
+    let res = input.trim().parse()?; 
     Ok(res)
 }
 
-pub fn get_user_string() -> Result<String, io::Error> {
+pub fn get_string_from_stdin() -> Result<String, CliError> {
     let mut input = String::new();
     io::stdin().read_line(&mut input)?;
     Ok(input.trim().to_string())
-}
-
-pub fn print_input_command() {
-    print!("Enter move. (h)it or (s)tay: ");
-    io::stdout()
-        .flush()
-        .expect("Failed to print to screen. Exiting game...");
 }
 
 pub fn print_invalid_command() {

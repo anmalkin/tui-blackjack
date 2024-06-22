@@ -1,13 +1,15 @@
 #![allow(dead_code, unused_imports)]
 
-pub mod utils;
 pub mod errors;
+pub mod utils;
 
 use core::{num, panic};
 use std::{
-    fmt::Display,
+    fmt::{Debug, Display},
     io::{self, Write},
 };
+
+use errors::CliError;
 
 use crate::utils::*;
 
@@ -48,26 +50,9 @@ enum Command {
     Hit,
     Stay,
     Split,
-    Invalid,
 }
 
 type Hand = Vec<Card>;
-
-fn print_player_hand(hand: &[Card]) {
-    for card in hand {
-        println!("{card}");
-    }
-    println!("Score: {}", calc_score(hand));
-}
-
-fn print_dealer_hand(hand: &[Card]) {
-    for card in hand {
-        println!("{card}");
-        sleep(time::Duration::from_secs(2));
-    }
-    println!("Dealer score: {}", calc_score(hand));
-    sleep(time::Duration::from_secs(1));
-}
 
 /// Run blackjack game loop
 pub fn run_game_loop() {
@@ -81,13 +66,19 @@ pub fn run_game_loop() {
             println!("You are out of money. Better luck next time!");
             break;
         }
+
         print!("Place bet: ");
         io::stdout()
             .flush()
             .expect("Failed to print to screen. Exiting game...");
-        match get_user_number() {
+
+        match get_float_from_stdin() {
             Ok(num) => {
                 active_bet = num;
+            }
+            Err(errors::CliError::ParseError(e)) => {
+                println!("{e}");
+                continue 'game;
             }
             Err(_) => panic!("Error reading user input. Exiting game..."),
         }
@@ -99,28 +90,32 @@ pub fn run_game_loop() {
             continue 'game;
         }
 
-        display_new_round_msg();
+        println!("Starting new round...");
+        sleep(time::Duration::from_secs(2));
         let mut round = Round::new();
         print_player_hand(round.player.as_ref());
+
+        // Check for Blackjack
         if let GameResult::Blackjack = round.result {
             let payout = active_bet * BLACKJACK_PAYOUT;
             println!("Blackjack! +${}", payout);
             bank += payout;
             continue 'game;
         }
+
         println!("Dealer showing...");
         sleep(time::Duration::from_secs(1));
         println!("{}", round.dealer[0]);
 
         'round: loop {
             print_input_command();
-            match get_user_string() {
+            match get_string_from_stdin() {
                 Ok(command) => user_command = command,
                 Err(_) => panic!("Error reading user input. Exiting game..."),
             }
 
             match get_command(&user_command) {
-                Command::Hit => {
+                Ok(Command::Hit) => {
                     round.hit();
                     println!("Your hand:");
                     print_player_hand(round.player.as_ref());
@@ -138,7 +133,7 @@ pub fn run_game_loop() {
                         GameResult::Blackjack => println!("21!"),
                     }
                 }
-                Command::Stay => {
+                Ok(Command::Stay) => {
                     println!("Staying put...");
                     round.run_dealer();
                     let player_score = calc_score(round.player.as_ref());
@@ -164,11 +159,11 @@ pub fn run_game_loop() {
                     }
                     continue 'game;
                 }
-                Command::Split => {
+                Ok(Command::Split) => {
                     println!("Split functionality not yet implemented!");
                     continue 'round;
                 }
-                Command::Invalid => {
+                Err(_) => {
                     print_invalid_command();
                     continue 'round;
                 }
@@ -210,13 +205,13 @@ fn calc_score(hand: &[Card]) -> u8 {
     score
 }
 
-fn get_command(s: &str) -> Command {
+fn get_command(s: &str) -> Result<Command, CliError> {
     match s {
-        "h" => Command::Hit,
-        "hit" => Command::Hit,
-        "s" => Command::Stay,
-        "stay" => Command::Stay,
-        _ => Command::Invalid,
+        "h" => Ok(Command::Hit),
+        "hit" => Ok(Command::Hit),
+        "s" => Ok(Command::Stay),
+        "stay" => Ok(Command::Stay),
+        _ => Err(CliError::InvalidCommand),
     }
 }
 
@@ -335,6 +330,31 @@ impl Game {
             self.active_bet += amt;
         }
     }
+}
+
+// Helper functions for displaying various inputs
+
+fn print_player_hand(hand: &[Card]) {
+    for card in hand {
+        println!("{card}");
+    }
+    println!("Score: {}", calc_score(hand));
+}
+
+fn print_dealer_hand(hand: &[Card]) {
+    for card in hand {
+        println!("{card}");
+        sleep(time::Duration::from_secs(2));
+    }
+    println!("Dealer score: {}", calc_score(hand));
+    sleep(time::Duration::from_secs(1));
+}
+
+pub fn print_input_command() {
+    print!("Enter move. (h)it or (s)tay: ");
+    io::stdout()
+        .flush()
+        .expect("Failed to print to screen. Exiting game...");
 }
 
 #[cfg(test)]
