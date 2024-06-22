@@ -309,29 +309,6 @@ impl Round {
     }
 }
 
-struct Game {
-    bank: u32,
-    active_bet: u32,
-}
-
-impl Game {
-    fn new() -> Self {
-        Self {
-            bank: 100,
-            active_bet: 0,
-        }
-    }
-
-    fn place_bet(&mut self, amt: u32) {
-        if amt > self.bank {
-            self.active_bet = self.bank;
-            println!("Bet is larger than remaining chips.")
-        } else {
-            self.active_bet += amt;
-        }
-    }
-}
-
 // Helper functions for displaying various inputs
 
 fn print_player_hand(hand: &[Card]) {
