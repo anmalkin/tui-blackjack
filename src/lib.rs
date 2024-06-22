@@ -76,17 +76,15 @@ pub fn run_game_loop() {
             Ok(num) => {
                 active_bet = num;
             }
-            Err(errors::CliError::ParseError(e)) => {
-                println!("{e}");
+            Err(errors::CliError::ParseError(_)) => {
+                println!("Not a valid number");
                 continue 'game;
             }
             Err(_) => panic!("Error reading user input. Exiting game..."),
         }
 
         if active_bet == 0.0 || active_bet > bank {
-            println!(
-                "Bet amount must be valid number greater than 0 and less than the bank balance."
-            );
+            println!("Bet amount must be greater than 0 and less than the bank balance.");
             continue 'game;
         }
 
@@ -104,14 +102,15 @@ pub fn run_game_loop() {
         }
 
         println!("Dealer showing...");
-        sleep(time::Duration::from_secs(1));
-        println!("{}", round.dealer[0]);
+        sleep(time::Duration::from_secs(2));
+        println!("{}", round.dealer.first().unwrap());
+        sleep(time::Duration::from_secs(2));
 
         'round: loop {
             print_input_command();
             match get_string_from_stdin() {
                 Ok(command) => user_command = command,
-                Err(_) => panic!("Error reading user input. Exiting game..."),
+                Err(_) => panic!("Uh oh. Looks like we ran into technical difficulties :("),
             }
 
             match get_command(&user_command) {
@@ -120,6 +119,7 @@ pub fn run_game_loop() {
                     println!("Your hand:");
                     print_player_hand(round.player.as_ref());
                     sleep(time::Duration::from_secs(1));
+                    println!();
                     println!("Dealer showing...");
                     sleep(time::Duration::from_secs(1));
                     println!("{}", round.dealer[0]);
@@ -134,10 +134,11 @@ pub fn run_game_loop() {
                     }
                 }
                 Ok(Command::Stay) => {
-                    println!("Staying put...");
                     round.run_dealer();
                     let player_score = calc_score(round.player.as_ref());
                     let dealer_score = calc_score(round.dealer.as_ref());
+                    println!();
+                    println!("Dealer drawing...");
                     print_dealer_hand(round.dealer.as_ref());
                     if dealer_score > 21 {
                         println!("Dealer busts! You win! +{}", active_bet);
@@ -164,6 +165,7 @@ pub fn run_game_loop() {
                     continue 'round;
                 }
                 Err(_) => {
+                    println!("Not a valid command");
                     print_invalid_command();
                     continue 'round;
                 }
@@ -323,8 +325,9 @@ fn print_dealer_hand(hand: &[Card]) {
         println!("{card}");
         sleep(time::Duration::from_secs(2));
     }
+    sleep(time::Duration::from_secs(2));
     println!("Dealer score: {}", calc_score(hand));
-    sleep(time::Duration::from_secs(1));
+    sleep(time::Duration::from_secs(2));
 }
 
 pub fn print_input_command() {
