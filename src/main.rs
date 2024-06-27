@@ -2,6 +2,7 @@ mod app;
 mod utils;
 mod ui;
 mod errors;
+mod cards;
 
 use crate::app::run_game_loop;
 

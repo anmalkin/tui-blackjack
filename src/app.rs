@@ -8,12 +8,8 @@ use std::{
 
 use crate::errors::CliError;
 use crate::utils::*;
+use crate::cards::*;
 
-// Magic numbers
-const BLACKJACK: u8 = 21;
-const FACECARD: u8 = 10;
-const ACE_HIGH: u8 = 11;
-const ACE_LOW: u8 = 1;
 const PAYOUT: f32 = 1.0;
 const BLACKJACK_PAYOUT: f32 = 1.5;
 
@@ -30,18 +26,18 @@ impl App {
     pub fn new() -> Self {
         App {
             bank: 100,
-            player_hand: Vec::new(),
-            dealer_hand: Vec::new(),
+            player_hand: Hand::new(),
+            dealer_hand: Hand::new(),
             current_bet: 0,
         }
     }
 
     pub fn get_player_score(&self) -> u8 {
-        calc_score(self.player_hand.as_ref())
+        self.player_hand.calc_score()
     }
 
     pub fn get_dealer_score(&self) -> u8 {
-        calc_score(self.dealer_hand.as_ref())
+        self.dealer_hand.calc_score()
     }
 }
 
@@ -58,24 +54,6 @@ enum GameState {
     Bust,
 }
 
-
-#[derive(Debug)]
-enum Suit {
-    Hearts,
-    Diamonds,
-    Spades,
-    Clubs,
-}
-
-#[derive(Debug)]
-enum Rank {
-    Ace,
-    Pip(u8),
-    Jack,
-    Queen,
-    King,
-}
-
 #[derive(Debug)]
 enum Command {
     Hit,
@@ -83,7 +61,6 @@ enum Command {
     Split,
 }
 
-type Hand = Vec<Card>;
 
 /// Run blackjack game loop
 pub fn run_game_loop() {
@@ -122,7 +99,7 @@ pub fn run_game_loop() {
         println!("Starting new round...");
         sleep(time::Duration::from_secs(2));
         let mut round = Round::new();
-        print_player_hand(round.player.as_ref());
+        print_player_hand(&round.player);
 
         // Check for Blackjack
         if let GameState::Blackjack = round.result {
@@ -148,12 +125,12 @@ pub fn run_game_loop() {
                 Ok(Command::Hit) => {
                     round.hit();
                     println!("Your hand:");
-                    print_player_hand(round.player.as_ref());
+                    print_player_hand(&round.player);
                     sleep(time::Duration::from_secs(1));
                     println!();
                     println!("Dealer showing...");
                     sleep(time::Duration::from_secs(1));
-                    println!("{}", round.dealer[0]);
+                    println!("{}", round.dealer.first().unwrap());
                     match round.result {
                         GameState::Bust => {
                             println!("Bust! -${}", active_bet);
@@ -166,11 +143,11 @@ pub fn run_game_loop() {
                 }
                 Ok(Command::Stay) => {
                     round.run_dealer();
-                    let player_score = calc_score(round.player.as_ref());
-                    let dealer_score = calc_score(round.dealer.as_ref());
+                    let player_score = round.player.calc_score();
+                    let dealer_score = round.dealer.calc_score();
                     println!();
                     println!("Dealer drawing...");
-                    print_dealer_hand(round.dealer.as_ref());
+                    print_dealer_hand(round.dealer);
                     if dealer_score > 21 {
                         println!("Dealer busts! You win! +{}", active_bet);
                         bank += active_bet;
@@ -205,39 +182,6 @@ pub fn run_game_loop() {
     }
 }
 
-fn calc_score(hand: &[Card]) -> u8 {
-    let mut aces = 0;
-    let mut score = 0;
-    for card in hand.iter() {
-        match card.rank {
-            Rank::Ace => {
-                aces += 1;
-                score += ACE_HIGH;
-            }
-            Rank::Pip(num) => {
-                score += num;
-            }
-            Rank::Jack => {
-                score += FACECARD;
-            }
-            Rank::Queen => {
-                score += FACECARD;
-            }
-            Rank::King => {
-                score += FACECARD;
-            }
-        }
-    }
-
-    // Adjust Aces value downward if necessary
-    while score > BLACKJACK && aces > 0 {
-        score -= ACE_HIGH - ACE_LOW; // note operator precedence
-        aces -= 1;
-        assert!(score >= 2);
-    }
-    score
-}
-
 fn get_command(s: &str) -> Result<Command, CliError> {
     match s {
         "h" => Ok(Command::Hit),
@@ -248,55 +192,6 @@ fn get_command(s: &str) -> Result<Command, CliError> {
     }
 }
 
-#[derive(Debug)]
-struct Card {
-    suit: Suit,
-    rank: Rank,
-}
-
-impl Card {
-    fn new() -> Self {
-        let value = fastrand::u8(1..=13);
-        let rank = match value {
-            1 => Rank::Ace,
-            11 => Rank::Jack,
-            12 => Rank::Queen,
-            13 => Rank::King,
-            _ => Rank::Pip(value),
-        };
-
-        let suit = match fastrand::u8(0..4) {
-            0 => Suit::Hearts,
-            1 => Suit::Diamonds,
-            2 => Suit::Spades,
-            3 => Suit::Clubs,
-            _ => panic!("Not a valid suit"),
-        };
-
-        Card { suit, rank }
-    }
-}
-
-impl Display for Card {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let rank = match self.rank {
-            Rank::Ace => String::from("Ace"),
-            Rank::Pip(num) => num.to_string(),
-            Rank::Jack => String::from("Jack"),
-            Rank::Queen => String::from("Queen"),
-            Rank::King => String::from("King"),
-        };
-
-        let suit = match self.suit {
-            Suit::Hearts => String::from("Hearts"),
-            Suit::Diamonds => String::from("Diamonds"),
-            Suit::Spades => String::from("Spades"),
-            Suit::Clubs => String::from("Clubs"),
-        };
-
-        write!(f, "[**{} of {}**]", rank, suit)
-    }
-}
 
 struct Round {
     player: Hand,
@@ -307,14 +202,14 @@ struct Round {
 impl Round {
     fn new() -> Self {
         // Initialize new player
-        let player = vec![Card::new(), Card::new()];
-        let result = match calc_score(&player) {
+        let player = Hand::new();
+        let result = match player.calc_score() {
             21 => GameState::Blackjack,
             num => GameState::Score(num),
         };
 
         // Initialize dealer
-        let dealer = vec![Card::new(), Card::new()];
+        let dealer = Hand::new();
 
         Self {
             player,
@@ -324,40 +219,40 @@ impl Round {
     }
 
     fn hit(&mut self) {
-        self.player.push(Card::new());
+        self.player.add_card();
 
         // State cannot be Blackjack after initial draw
-        self.result = match calc_score(&self.player) {
+        self.result = match self.player.calc_score() {
             (22..) => GameState::Bust,
             num => GameState::Score(num),
         };
     }
 
     fn run_dealer(&mut self) {
-        let mut dealer_score = calc_score(&self.dealer);
+        let mut dealer_score = self.dealer.calc_score();
         while dealer_score < 17 {
-            self.dealer.push(Card::new());
-            dealer_score = calc_score(&self.dealer);
+            self.dealer.add_card();
+            dealer_score = self.dealer.calc_score();
         }
     }
 }
 
 // Helper functions for displaying various inputs
 
-fn print_player_hand(hand: &[Card]) {
-    for card in hand {
+fn print_player_hand(hand: &Hand) {
+    for card in hand.as_ref() {
         println!("{card}");
     }
-    println!("Score: {}", calc_score(hand));
+    println!("Score: {}", hand.calc_score());
 }
 
-fn print_dealer_hand(hand: &[Card]) {
-    for card in hand {
+fn print_dealer_hand(hand: Hand) {
+    for card in hand.as_ref() {
         println!("{card}");
         sleep(time::Duration::from_secs(2));
     }
     sleep(time::Duration::from_secs(2));
-    println!("Dealer score: {}", calc_score(hand));
+    println!("Dealer score: {}", hand.calc_score());
     sleep(time::Duration::from_secs(2));
 }
 
@@ -373,147 +268,6 @@ mod test {
     use super::*;
     #[test]
     fn calc_score_test() {
-        let hand = vec![
-            Card {
-                suit: Suit::Clubs,
-                rank: Rank::Jack,
-            },
-            Card {
-                suit: Suit::Diamonds,
-                rank: Rank::Queen,
-            },
-        ];
-        assert_eq!(calc_score(&hand), 20);
-
-        let hand = vec![
-            Card {
-                suit: Suit::Clubs,
-                rank: Rank::Ace,
-            },
-            Card {
-                suit: Suit::Diamonds,
-                rank: Rank::Queen,
-            },
-        ];
-        assert_eq!(calc_score(&hand), 21);
-
-        let hand = vec![
-            Card {
-                suit: Suit::Clubs,
-                rank: Rank::Ace,
-            },
-            Card {
-                suit: Suit::Diamonds,
-                rank: Rank::Ace,
-            },
-        ];
-        assert_eq!(calc_score(&hand), 12);
-
-        let hand = vec![
-            Card {
-                suit: Suit::Clubs,
-                rank: Rank::Pip(8),
-            },
-            Card {
-                suit: Suit::Diamonds,
-                rank: Rank::Pip(10),
-            },
-        ];
-        assert_eq!(calc_score(&hand), 18);
-    }
-
-    #[test]
-    fn calc_score_test_hard() {
-        let hand = vec![
-            Card {
-                suit: Suit::Clubs,
-                rank: Rank::Pip(8),
-            },
-            Card {
-                suit: Suit::Diamonds,
-                rank: Rank::Pip(10),
-            },
-            Card {
-                suit: Suit::Spades,
-                rank: Rank::Ace,
-            },
-            Card {
-                suit: Suit::Spades,
-                rank: Rank::Ace,
-            },
-            Card {
-                suit: Suit::Spades,
-                rank: Rank::Ace,
-            },
-        ];
-        assert_eq!(calc_score(&hand), 21);
-
-        let hand = vec![
-            Card {
-                suit: Suit::Clubs,
-                rank: Rank::Pip(8),
-            },
-            Card {
-                suit: Suit::Diamonds,
-                rank: Rank::Pip(10),
-            },
-            Card {
-                suit: Suit::Spades,
-                rank: Rank::Ace,
-            },
-            Card {
-                suit: Suit::Diamonds,
-                rank: Rank::Ace,
-            },
-            Card {
-                suit: Suit::Clubs,
-                rank: Rank::Ace,
-            },
-            Card {
-                suit: Suit::Clubs,
-                rank: Rank::Ace,
-            },
-        ];
-        assert_eq!(calc_score(&hand), 22);
-
-        let hand = vec![
-            Card {
-                suit: Suit::Clubs,
-                rank: Rank::Pip(3),
-            },
-            Card {
-                suit: Suit::Clubs,
-                rank: Rank::Ace,
-            },
-            Card {
-                suit: Suit::Clubs,
-                rank: Rank::Jack,
-            },
-            Card {
-                suit: Suit::Spades,
-                rank: Rank::Jack,
-            },
-        ];
-        assert_eq!(calc_score(&hand), 24);
-    }
-
-    #[test]
-    fn display_cards() {
-        let num_card = Card {
-            suit: Suit::Clubs,
-            rank: Rank::Pip(3),
-        };
-        let face_card = Card {
-            suit: Suit::Diamonds,
-            rank: Rank::King,
-        };
-        let ace = Card {
-            suit: Suit::Hearts,
-            rank: Rank::Ace,
-        };
-
-        assert_eq!(num_card.to_string(), "[**3 of Clubs**]");
-        assert_eq!(face_card.to_string(), "[**King of Diamonds**]");
-        assert_eq!(ace.to_string(), "[**Ace of Hearts**]");
+        todo!()
     }
 }
