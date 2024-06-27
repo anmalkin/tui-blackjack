@@ -25,6 +25,40 @@ pub struct App {
     current_bet: u32,
 }
 
+impl App {
+    // TODO: Make bank amount dynamic
+    pub fn new() -> Self {
+        App {
+            bank: 100,
+            player_hand: Vec::new(),
+            dealer_hand: Vec::new(),
+            current_bet: 0,
+        }
+    }
+
+    pub fn get_player_score(&self) -> u8 {
+        calc_score(self.player_hand.as_ref())
+    }
+
+    pub fn get_dealer_score(&self) -> u8 {
+        calc_score(self.dealer_hand.as_ref())
+    }
+}
+
+impl Default for App {
+    fn default() -> Self {
+        App::new()
+    }
+}
+
+#[derive(Debug)]
+enum GameState {
+    Blackjack,
+    Score(u8),
+    Bust,
+}
+
+
 #[derive(Debug)]
 enum Suit {
     Hearts,
@@ -40,13 +74,6 @@ enum Rank {
     Jack,
     Queen,
     King,
-}
-
-#[derive(Debug)]
-enum GameResult {
-    Blackjack,
-    Score(u8),
-    Bust,
 }
 
 #[derive(Debug)]
@@ -98,7 +125,7 @@ pub fn run_game_loop() {
         print_player_hand(round.player.as_ref());
 
         // Check for Blackjack
-        if let GameResult::Blackjack = round.result {
+        if let GameState::Blackjack = round.result {
             let payout = active_bet * BLACKJACK_PAYOUT;
             println!("Blackjack! +${}", payout);
             bank += payout;
@@ -128,13 +155,13 @@ pub fn run_game_loop() {
                     sleep(time::Duration::from_secs(1));
                     println!("{}", round.dealer[0]);
                     match round.result {
-                        GameResult::Bust => {
+                        GameState::Bust => {
                             println!("Bust! -${}", active_bet);
                             bank -= active_bet;
                             continue 'game;
                         }
-                        GameResult::Score(_) => continue 'round,
-                        GameResult::Blackjack => println!("21!"),
+                        GameState::Score(_) => continue 'round,
+                        GameState::Blackjack => println!("21!"),
                     }
                 }
                 Ok(Command::Stay) => {
@@ -274,7 +301,7 @@ impl Display for Card {
 struct Round {
     player: Hand,
     dealer: Hand,
-    result: GameResult,
+    result: GameState,
 }
 
 impl Round {
@@ -282,8 +309,8 @@ impl Round {
         // Initialize new player
         let player = vec![Card::new(), Card::new()];
         let result = match calc_score(&player) {
-            21 => GameResult::Blackjack,
-            num => GameResult::Score(num),
+            21 => GameState::Blackjack,
+            num => GameState::Score(num),
         };
 
         // Initialize dealer
@@ -301,8 +328,8 @@ impl Round {
 
         // State cannot be Blackjack after initial draw
         self.result = match calc_score(&self.player) {
-            (22..) => GameResult::Bust,
-            num => GameResult::Score(num),
+            (22..) => GameState::Bust,
+            num => GameState::Score(num),
         };
     }
 
