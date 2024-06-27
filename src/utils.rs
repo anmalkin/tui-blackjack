@@ -1,6 +1,6 @@
 pub use std::thread::sleep;
 pub use std::{
-    io::{self, Write},
+    io,
     time,
 };
 

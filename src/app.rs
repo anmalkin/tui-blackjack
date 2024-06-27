@@ -1,16 +1,12 @@
 #![allow(dead_code, unused_imports)]
 
-pub mod errors;
-pub mod utils;
-
 use core::{num, panic};
 use std::{
     fmt::{Debug, Display},
     io::{self, Write},
 };
 
-use errors::CliError;
-
+use crate::errors::CliError;
 use crate::utils::*;
 
 // Magic numbers
@@ -20,6 +16,14 @@ const ACE_HIGH: u8 = 11;
 const ACE_LOW: u8 = 1;
 const PAYOUT: f32 = 1.0;
 const BLACKJACK_PAYOUT: f32 = 1.5;
+
+#[derive(Debug)]
+pub struct App {
+    bank: u32,
+    player_hand: Hand,
+    dealer_hand: Hand,
+    current_bet: u32,
+}
 
 #[derive(Debug)]
 enum Suit {
@@ -76,7 +80,7 @@ pub fn run_game_loop() {
             Ok(num) => {
                 active_bet = num;
             }
-            Err(errors::CliError::ParseError(_)) => {
+            Err(CliError::ParseError(_)) => {
                 println!("Not a valid number");
                 continue 'game;
             }

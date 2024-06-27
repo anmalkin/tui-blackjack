@@ -1,7 +1,7 @@
 /// Error wrappers to handle various errors from user command line input.
 use core::fmt;
 use std::{
-    io::{self, Error},
+    io::{self},
     num::ParseFloatError,
 };
 
