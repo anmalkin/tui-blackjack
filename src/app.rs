@@ -22,28 +22,64 @@ pub struct App {
 }
 
 impl App {
-    // TODO: Make bank amount dynamic
-    pub fn new() -> Self {
+    pub fn new(bank: u32) -> Self {
         App {
-            bank: 100,
+            bank,
             player_hand: Hand::new(),
             dealer_hand: Hand::new(),
             current_bet: 0,
         }
     }
 
-    pub fn get_player_score(&self) -> u8 {
+    /// Initialize bank with argument. Bank defaults to $100 if not explicitly set.
+    pub fn set_bank(&mut self, amt: u32) {
+        self.bank = amt;
+    }
+
+    pub fn bank(&self) -> u32 {
+        self.bank
+    }
+
+    pub fn player_score(&self) -> u8 {
         self.player_hand.calc_score()
     }
 
-    pub fn get_dealer_score(&self) -> u8 {
+    pub fn dealer_score(&self) -> u8 {
         self.dealer_hand.calc_score()
+    }
+
+    pub fn place_bet(&mut self, bet: u32) {
+        self.current_bet = bet;
+    }
+
+    pub fn player_draw(&mut self) {
+        self.player_hand.add_card();
+    }
+
+    pub fn dealer_draw(&mut self) {
+        self.dealer_hand.add_card();
+    }
+
+    pub fn win(&mut self, multiplier: u32) {
+        self.bank += self.current_bet * multiplier;
+        self.current_bet = 0;
+    }
+
+    pub fn lose(&mut self) {
+        self.bank -= self.current_bet;
+        self.current_bet = 0;
     }
 }
 
+/// Default bank amount set to $100
 impl Default for App {
     fn default() -> Self {
-        App::new()
+        App {
+            bank: 100,
+            player_hand: Hand::new(),
+            dealer_hand: Hand::new(),
+            current_bet: 0,
+        }
     }
 }
 
@@ -60,7 +96,6 @@ enum Command {
     Stay,
     Split,
 }
-
 
 /// Run blackjack game loop
 pub fn run_game_loop() {
