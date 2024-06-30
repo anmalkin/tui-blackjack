@@ -28,6 +28,12 @@ pub struct Card {
     rank: Rank,
 }
 
+impl Default for Card {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Card {
     pub fn new() -> Self {
         let value = fastrand::u8(1..=13);
@@ -75,6 +81,12 @@ impl Display for Card {
 #[derive(Debug)]
 pub struct Hand {
     cards: Vec<Card>,
+}
+
+impl Default for Hand {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl Hand {
