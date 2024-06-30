@@ -7,16 +7,18 @@ mod utils;
 use std::{error::Error, io};
 
 use crossterm::{
-    event::{DisableMouseCapture, EnableMouseCapture},
+    event::{self, DisableMouseCapture, EnableMouseCapture, Event},
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
+
 use ratatui::{
     backend::{Backend, CrosstermBackend},
     Terminal,
 };
 
 use crate::app::App;
+use crate::ui::ui;
 
 fn main() -> Result<(), Box<dyn Error>> {
     // set up terminal
@@ -48,5 +50,16 @@ fn main() -> Result<(), Box<dyn Error>> {
 }
 
 pub fn run_app<B: Backend>(app: &mut App, terminal: &mut Terminal<B>) -> io::Result<bool> {
+    loop {
+        terminal.draw(|f| ui(f, app));
+
+        if let Event::Key(key) = event::read()? {
+            if key.kind == event::KeyEventKind::Release {
+                // Skip events that are not KeyEventKind::Press
+                continue;
+            }
+        }
+        break; // TODO: Finish main loop implementation
+    }
     todo!()
 }
