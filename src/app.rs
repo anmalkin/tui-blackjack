@@ -6,9 +6,9 @@ use std::{
     io::{self, Write},
 };
 
+use crate::cards::*;
 use crate::errors::CliError;
 use crate::utils::*;
-use crate::cards::*;
 
 const PAYOUT: f32 = 1.0;
 const BLACKJACK_PAYOUT: f32 = 1.5;
@@ -19,6 +19,7 @@ pub struct App {
     player_hand: Hand,
     dealer_hand: Hand,
     current_bet: u32,
+    state: GameState,
 }
 
 impl App {
@@ -28,12 +29,8 @@ impl App {
             player_hand: Hand::new(),
             dealer_hand: Hand::new(),
             current_bet: 0,
+            state: GameState::Start,
         }
-    }
-
-    /// Initialize bank with argument. Bank defaults to $100 if not explicitly set.
-    pub fn set_bank(&mut self, amt: u32) {
-        self.bank = amt;
     }
 
     pub fn bank(&self) -> u32 {
@@ -48,16 +45,44 @@ impl App {
         self.dealer_hand.calc_score()
     }
 
+    pub fn player_hand(&self) -> &Hand {
+        &self.player_hand
+    }
+
+    pub fn dealer_hand(&self) -> &Hand {
+        &self.dealer_hand
+    }
+
     pub fn place_bet(&mut self, bet: u32) {
         self.current_bet = bet;
     }
 
-    pub fn player_draw(&mut self) {
-        self.player_hand.add_card();
-    }
-
-    pub fn dealer_draw(&mut self) {
-        self.dealer_hand.add_card();
+    pub fn run_command(&mut self, command: Command) {
+        match command {
+            Command::Hit => {
+                self.player_hand.add_card();
+                if self.player_score() > 21 {
+                    self.state = GameState::Lose;
+                }
+            }
+            Command::Stay => self.state = GameState::DealerTurn,
+            Command::Split => todo!(),
+            Command::Dealer => {
+                let mut dealer_score = self.dealer_score();
+                let player_score = self.player_score();
+                while dealer_score < 17 {
+                    self.dealer_hand.add_card();
+                    dealer_score = self.dealer_score();
+                }
+                if dealer_score > 21 || dealer_score < player_score {
+                    // Ensure dealer does not run after player has already lost
+                    assert!(self.player_score() <= 21);
+                    self.state = GameState::Win;
+                } else {
+                    self.state = GameState::Lose;
+                }
+            }
+        }
     }
 
     pub fn win(&mut self, multiplier: u32) {
@@ -79,22 +104,30 @@ impl Default for App {
             player_hand: Hand::new(),
             dealer_hand: Hand::new(),
             current_bet: 0,
+            state: GameState::Start,
         }
     }
 }
 
 #[derive(Debug)]
-enum GameState {
-    Blackjack,
-    Score(u8),
-    Bust,
+pub enum GameState {
+    Start,
+    Blackjack, // TODO: deprecate
+    PlayerTurn,
+    DealerTurn,
+    Score(u8), // TODO: deprecate
+    Bust,      // TODO: deprecate
+    Win,
+    Lose,
+    Quit,
 }
 
 #[derive(Debug)]
-enum Command {
+pub enum Command {
     Hit,
     Stay,
     Split,
+    Dealer,
 }
 
 /// Run blackjack game loop
@@ -226,7 +259,6 @@ fn get_command(s: &str) -> Result<Command, CliError> {
         _ => Err(CliError::InvalidCommand),
     }
 }
-
 
 struct Round {
     player: Hand,
