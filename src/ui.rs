@@ -14,10 +14,10 @@ pub fn ui(f: &mut Frame, app: &App) {
     let chunks = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
-            Constraint::Min(2),
-            Constraint::Percentage(40),
-            Constraint::Percentage(40),
-            Constraint::Min(2),
+            Constraint::Min(3),
+            Constraint::Percentage(35),
+            Constraint::Percentage(35),
+            Constraint::Min(3),
         ])
         .split(f.size());
 
@@ -35,7 +35,7 @@ pub fn ui(f: &mut Frame, app: &App) {
     f.render_widget(title, chunks[0]);
 
     // Dealer view
-    let dealer_area = centered_rect(50, 75, chunks[2]);
+    let dealer_area = centered_rect(50, 75, chunks[1]);
     let dealer_block = Block::default()
         .title("Dealer")
         .borders(Borders::ALL)
@@ -44,7 +44,7 @@ pub fn ui(f: &mut Frame, app: &App) {
     f.render_widget(dealer_block, dealer_area);
 
     // Player view
-    let player_area = centered_rect(50, 75, chunks[3]);
+    let player_area = centered_rect(50, 75, chunks[2]);
     let player_block = Block::default()
         .title("Player")
         .borders(Borders::ALL)
