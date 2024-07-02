@@ -152,7 +152,30 @@ pub fn print_input_command() {
 mod test {
     use super::*;
     #[test]
-    fn calc_score_test() {
-        todo!()
+    fn deal() {
+        let mut app = App::default();
+        app.start();
+        let player_count = app.player_hand.count();
+        let dealer_count = app.dealer_hand.count();
+        assert_eq!(2, player_count);
+        assert_eq!(2, dealer_count);
+        assert!(app.player_score() > 1);
+        assert!(app.dealer_score() > 1);
+    }
+
+    #[test]
+    fn hit() {
+        let mut app = App::default();
+        app.start();
+        let old_player_score = app.player_score();
+
+        app.run(Command::Hit);
+        let new_player_score = app.player_score();
+        assert!(new_player_score > old_player_score);
+
+        let player_count = app.player_hand.count();
+        let dealer_count = app.dealer_hand.count();
+        assert_eq!(3, player_count);
+        assert_eq!(2, dealer_count);
     }
 }
