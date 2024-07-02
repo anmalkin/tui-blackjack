@@ -1,16 +1,17 @@
 #![allow(dead_code, unused_imports)]
 
 use ratatui::{
-    layout::{Constraint, Direction, Layout, Rect},
+    layout::{Alignment, Constraint, Direction, Layout, Rect},
     style::{Color, Style},
     text::{Line, Span, Text},
     widgets::{self, Block, Borders, Clear, List, ListItem, Paragraph, Wrap},
     Frame,
 };
+use tui_textarea::TextArea;
 
-use crate::app::App;
+use crate::app::*;
 
-pub fn ui(f: &mut Frame, app: &App) {
+pub fn ui(f: &mut Frame, app: &App, form: &mut TextArea) {
     let chunks = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
@@ -53,10 +54,34 @@ pub fn ui(f: &mut Frame, app: &App) {
     f.render_widget(player_block, player_area);
 
     // Footer with allowed commands
-    let command_footer = Paragraph::new("(h) to hit / (s) to stay / (q) to quit")
-        .block(Block::default().borders(Borders::ALL));
+    let current_keys_hint = {
+        match app.state {
+            GameState::EnterBet => {
+                Span::styled("Input bet and press enter", Style::default().fg(Color::Red))
+            }
+            GameState::PlayerTurn => Span::styled(
+                "(h) to hit / (s) to stand / (q) to quit game",
+                Style::default().fg(Color::Red),
+            ),
+            GameState::Win => Span::styled(
+                "Press Enter to play again / (q) to quit",
+                Style::default().fg(Color::Red),
+            ),
+            GameState::Lose => Span::styled(
+                "Press Enter to play again / (q) to quit",
+                Style::default().fg(Color::Red),
+            ),
+            GameState::Quit => Span::styled(
+                "Exiting game...",
+                Style::default().fg(Color::Red),
+            ),
+        }
+    };
 
-    f.render_widget(command_footer, chunks[3]);
+    let key_notes_footer =
+        Paragraph::new(Line::from(current_keys_hint).alignment(Alignment::Center)).block(Block::default().borders(Borders::ALL));
+
+    f.render_widget(key_notes_footer, chunks[3]);
 }
 
 /// helper function to create a centered rect using up certain percentage of the available rect `r`
