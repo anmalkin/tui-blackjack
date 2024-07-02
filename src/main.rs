@@ -49,7 +49,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-pub fn run_app<B: Backend>(app: &mut App, terminal: &mut Terminal<B>) -> io::Result<bool> {
+pub fn run_app<B: Backend>(app: &mut App, terminal: &mut Terminal<B>) -> io::Result<()> {
     loop {
         terminal.draw(|f| ui(f, app));
 
