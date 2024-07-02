@@ -106,36 +106,44 @@ impl Hand {
         self.cards.as_ref()
     }
 
-    pub fn calc_score(&self) -> u8 {
-    let mut aces = 0;
-    let mut score = 0;
-    for card in &self.cards {
-        match card.rank {
-            Rank::Ace => {
-                aces += 1;
-                score += ACE_HIGH;
-            }
-            Rank::Pip(num) => {
-                score += num;
-            }
-            Rank::Jack => {
-                score += FACECARD;
-            }
-            Rank::Queen => {
-                score += FACECARD;
-            }
-            Rank::King => {
-                score += FACECARD;
-            }
-        }
+    pub fn count(&self) -> usize {
+        self.cards.len()
     }
 
-    // Adjust Aces value downward if necessary
-    while score > BLACKJACK && aces > 0 {
-        score -= ACE_HIGH - ACE_LOW; // note operator precedence
-        aces -= 1;
-        assert!(score >= 2);
+    pub fn clear(&mut self) {
+        self.cards.clear()
     }
-    score
+
+    pub fn calc_score(&self) -> u8 {
+        let mut aces = 0;
+        let mut score = 0;
+        for card in &self.cards {
+            match card.rank {
+                Rank::Ace => {
+                    aces += 1;
+                    score += ACE_HIGH;
+                }
+                Rank::Pip(num) => {
+                    score += num;
+                }
+                Rank::Jack => {
+                    score += FACECARD;
+                }
+                Rank::Queen => {
+                    score += FACECARD;
+                }
+                Rank::King => {
+                    score += FACECARD;
+                }
+            }
+        }
+
+        // Adjust Aces value downward if necessary
+        while score > BLACKJACK && aces > 0 {
+            score -= ACE_HIGH - ACE_LOW; // note operator precedence
+            aces -= 1;
+            assert!(score >= 2);
+        }
+        score
     }
 }
