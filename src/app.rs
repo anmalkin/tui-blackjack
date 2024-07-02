@@ -43,7 +43,7 @@ impl App {
             player_hand,
             dealer_hand,
             current_bet: 0,
-            state: GameState::Start,
+            state: GameState::EnterBet,
         }
     }
 
@@ -108,7 +108,7 @@ impl Default for App {
 
 #[derive(Debug)]
 pub enum GameState {
-    Start,
+    EnterBet,
     PlayerTurn,
     Win,
     Lose,
