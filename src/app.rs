@@ -30,16 +30,24 @@ pub struct App {
 
 impl App {
     pub fn new(bank: u32) -> Self {
+        let mut player_hand = Hand::new();
+        player_hand.add_card();
+        player_hand.add_card();
+
+        let mut dealer_hand = Hand::new();
+        dealer_hand.add_card();
+        dealer_hand.add_card();
+
         App {
             bank,
-            player_hand: Hand::new(),
-            dealer_hand: Hand::new(),
+            player_hand,
+            dealer_hand,
             current_bet: 0,
             state: GameState::Start,
         }
     }
 
-    pub fn start(&mut self) {
+    pub fn reset(&mut self) {
         self.current_bet = 0;
         self.player_hand.clear();
         self.player_hand.add_card();
@@ -48,6 +56,8 @@ impl App {
         self.dealer_hand.clear();
         self.dealer_hand.add_card();
         self.dealer_hand.add_card();
+
+        self.state = GameState::PlayerTurn;
     }
 
     pub fn player_score(&self) -> u8 {
@@ -66,7 +76,7 @@ impl App {
                     self.state = GameState::Lose;
                 }
             }
-            Command::Stay => {
+            Command::Stand => {
                 let mut dealer_score = self.dealer_score();
                 let player_score = self.player_score();
                 while dealer_score < DEALER_STAND {
@@ -92,13 +102,7 @@ impl App {
 /// Default bank amount set to $100
 impl Default for App {
     fn default() -> Self {
-        App {
-            bank: 100,
-            player_hand: Hand::new(),
-            dealer_hand: Hand::new(),
-            current_bet: 0,
-            state: GameState::Start,
-        }
+        App::new(0)
     }
 }
 
@@ -114,18 +118,8 @@ pub enum GameState {
 #[derive(Debug)]
 pub enum Command {
     Hit,
-    Stay,
+    Stand,
     Split,
-}
-
-fn get_command(s: &str) -> Result<Command, CliError> {
-    match s {
-        "h" => Ok(Command::Hit),
-        "hit" => Ok(Command::Hit),
-        "s" => Ok(Command::Stay),
-        "stay" => Ok(Command::Stay),
-        _ => Err(CliError::InvalidCommand),
-    }
 }
 
 /// Calculate current score of blackjack hand. Aces are scored as 11 unless the total score is
@@ -170,8 +164,7 @@ mod test {
     use super::*;
     #[test]
     fn deal() {
-        let mut app = App::default();
-        app.start();
+        let app = App::default();
         let player_count = app.player_hand.count();
         let dealer_count = app.dealer_hand.count();
         assert_eq!(2, player_count);
@@ -183,7 +176,6 @@ mod test {
     #[test]
     fn hit() {
         let mut app = App::default();
-        app.start();
         let old_player_score = app.player_score();
 
         app.run(Command::Hit);
