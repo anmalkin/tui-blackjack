@@ -1,12 +1,7 @@
 use std::fmt::{Debug, Display};
 
-pub const ACE_HIGH: u8 = 11;
-pub const ACE_LOW: u8 = 1;
-pub const BLACKJACK: u8 = 21;
-pub const FACECARD: u8 = 10;
-
 #[derive(Debug)]
-enum Suit {
+pub enum Suit {
     Hearts,
     Diamonds,
     Spades,
@@ -14,7 +9,7 @@ enum Suit {
 }
 
 #[derive(Debug)]
-enum Rank {
+pub enum Rank {
     Ace,
     Pip(u8),
     Jack,
@@ -24,8 +19,8 @@ enum Rank {
 
 #[derive(Debug)]
 pub struct Card {
-    suit: Suit,
-    rank: Rank,
+    pub suit: Suit,
+    pub rank: Rank,
 }
 
 impl Default for Card {
@@ -37,6 +32,7 @@ impl Default for Card {
 impl Card {
     pub fn new() -> Self {
         let value = fastrand::u8(1..=13);
+        assert!(value > 0 && value < 14);
         let rank = match value {
             1 => Rank::Ace,
             11 => Rank::Jack,
@@ -45,7 +41,7 @@ impl Card {
             _ => Rank::Pip(value),
         };
 
-        let suit = match fastrand::u8(0..4) {
+        let suit = match fastrand::u8(0..=3) {
             0 => Suit::Hearts,
             1 => Suit::Diamonds,
             2 => Suit::Spades,
@@ -74,13 +70,13 @@ impl Display for Card {
             Suit::Clubs => String::from("Clubs"),
         };
 
-        write!(f, "[**{} of {}**]", rank, suit)
+        write!(f, "[** {} of {} **]", rank, suit)
     }
 }
 
 #[derive(Debug)]
 pub struct Hand {
-    cards: Vec<Card>,
+    pub cards: Vec<Card>,
 }
 
 impl Default for Hand {
@@ -112,38 +108,5 @@ impl Hand {
 
     pub fn clear(&mut self) {
         self.cards.clear()
-    }
-
-    pub fn calc_score(&self) -> u8 {
-        let mut aces = 0;
-        let mut score = 0;
-        for card in &self.cards {
-            match card.rank {
-                Rank::Ace => {
-                    aces += 1;
-                    score += ACE_HIGH;
-                }
-                Rank::Pip(num) => {
-                    score += num;
-                }
-                Rank::Jack => {
-                    score += FACECARD;
-                }
-                Rank::Queen => {
-                    score += FACECARD;
-                }
-                Rank::King => {
-                    score += FACECARD;
-                }
-            }
-        }
-
-        // Adjust Aces value downward if necessary
-        while score > BLACKJACK && aces > 0 {
-            score -= ACE_HIGH - ACE_LOW; // note operator precedence
-            aces -= 1;
-            assert!(score >= 2);
-        }
-        score
     }
 }

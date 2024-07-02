@@ -12,6 +12,12 @@ use crate::utils::*;
 
 const PAYOUT: f32 = 1.0;
 const BLACKJACK_PAYOUT: f32 = 1.5;
+const ACE_HIGH: u8 = 11;
+const ACE_LOW: u8 = 1;
+const BLACKJACK: u8 = 21;
+const FACECARD: u8 = 10;
+const DEALER_STAND: u8 = 17;
+
 
 #[derive(Debug)]
 pub struct App {
@@ -45,31 +51,32 @@ impl App {
     }
 
     pub fn player_score(&self) -> u8 {
-        self.player_hand.calc_score()
+        calc_score(&self.player_hand)
     }
 
     pub fn dealer_score(&self) -> u8 {
-        self.dealer_hand.calc_score()
+        calc_score(&self.dealer_hand)
     }
 
     pub fn run(&mut self, command: Command) {
         match command {
             Command::Hit => {
                 self.player_hand.add_card();
-                if self.player_score() > 21 {
+                if self.player_score() > BLACKJACK {
                     self.state = GameState::Lose;
                 }
             }
             Command::Stay => {
                 let mut dealer_score = self.dealer_score();
                 let player_score = self.player_score();
-                while dealer_score < 17 {
+                while dealer_score < DEALER_STAND {
                     self.dealer_hand.add_card();
                     dealer_score = self.dealer_score();
                 }
-                if dealer_score > 21 || dealer_score < player_score {
+
+                if dealer_score > BLACKJACK || dealer_score < player_score {
                     // Ensure dealer does not run after player has already lost
-                    assert!(self.player_score() <= 21);
+                    assert!(self.player_score() <= BLACKJACK);
                     self.state = GameState::Win;
                     self.bank += self.current_bet
                 } else {
@@ -80,7 +87,6 @@ impl App {
             Command::Split => todo!(),
         }
     }
-
 }
 
 /// Default bank amount set to $100
@@ -122,31 +128,42 @@ fn get_command(s: &str) -> Result<Command, CliError> {
     }
 }
 
+/// Calculate current score of blackjack hand. Aces are scored as 11 unless the total score is
+/// above 21, in which case they are scored as 1.
+fn calc_score(hand: &Hand) -> u8 {
+    let mut aces = 0;
+    let mut score = 0;
+    for card in hand.cards.iter() {
+        match card.rank {
+            Rank::Ace => {
+                aces += 1;
+                score += ACE_HIGH;
+            }
+            Rank::Pip(num) => {
+                score += num;
+            }
+            Rank::Jack => {
+                score += FACECARD;
+            }
+            Rank::Queen => {
+                score += FACECARD;
+            }
+            Rank::King => {
+                score += FACECARD;
+            }
+        }
+    }
+
+    // Adjust Aces value downward if necessary
+    while score > BLACKJACK && aces > 0 {
+        score -= ACE_HIGH - ACE_LOW; // note operator precedence
+        aces -= 1;
+        assert!(score >= 2);
+    }
+    score
+}
+
 // Helper functions for displaying various inputs
-
-fn print_player_hand(hand: &Hand) {
-    for card in hand.as_ref() {
-        println!("{card}");
-    }
-    println!("Score: {}", hand.calc_score());
-}
-
-fn print_dealer_hand(hand: Hand) {
-    for card in hand.as_ref() {
-        println!("{card}");
-        sleep(time::Duration::from_secs(2));
-    }
-    sleep(time::Duration::from_secs(2));
-    println!("Dealer score: {}", hand.calc_score());
-    sleep(time::Duration::from_secs(2));
-}
-
-pub fn print_input_command() {
-    print!("Enter move. (h)it or (s)tay: ");
-    io::stdout()
-        .flush()
-        .expect("Failed to print to screen. Exiting game...");
-}
 
 #[cfg(test)]
 mod test {
