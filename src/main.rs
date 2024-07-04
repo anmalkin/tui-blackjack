@@ -2,7 +2,6 @@ mod app;
 mod cards;
 mod errors;
 mod ui;
-mod utils;
 
 use std::{error::Error, io};
 

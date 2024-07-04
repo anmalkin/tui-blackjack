@@ -8,7 +8,6 @@ use std::{
 
 use crate::cards::*;
 use crate::errors::CliError;
-use crate::utils::*;
 
 const PAYOUT: f32 = 1.0;
 const BLACKJACK_PAYOUT: f32 = 1.5;
