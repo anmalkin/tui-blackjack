@@ -2,7 +2,7 @@
 
 use ratatui::{
     layout::{Alignment, Constraint, Direction, Layout, Rect},
-    style::{Color, Style},
+    style::{Color, Style, Stylize},
     text::{Line, Span, Text},
     widgets::{self, Block, Borders, Clear, List, ListItem, Paragraph, Wrap},
     Frame,
@@ -15,10 +15,10 @@ pub fn ui(f: &mut Frame, app: &App, form: &mut TextArea) {
     let chunks = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
-            Constraint::Min(3),
-            Constraint::Percentage(35),
-            Constraint::Percentage(35),
-            Constraint::Min(3),
+            Constraint::Min(4),
+            Constraint::Percentage(50),
+            Constraint::Percentage(50),
+            Constraint::Min(4),
         ])
         .split(f.size());
 
@@ -27,10 +27,9 @@ pub fn ui(f: &mut Frame, app: &App, form: &mut TextArea) {
         .borders(Borders::ALL)
         .style(Style::default());
 
-    let title = Paragraph::new(Text::styled(
-        "Command Line Blackjack",
-        Style::default().fg(Color::Green),
-    ))
+    let title = Paragraph::new(
+        Line::from("Command Line Blackjack").alignment(Alignment::Center).fg(Color::Green),
+    )
     .block(title_block);
 
     f.render_widget(title, chunks[0]);
@@ -53,6 +52,16 @@ pub fn ui(f: &mut Frame, app: &App, form: &mut TextArea) {
 
     f.render_widget(player_block, player_area);
 
+    // Input bet
+    let bet_area = centered_rect(50, 25, player_area);
+    let bet_block = Block::default()
+        .title("Place bet")
+        .borders(Borders::ALL)
+        .style(Style::default().bg(Color::Yellow).fg(Color::Black));
+    form.set_block(bet_block);
+    let bet_form = form.widget();
+    f.render_widget(bet_form, bet_area);
+
     // Footer with allowed commands
     let current_keys_hint = {
         match app.state {
@@ -71,15 +80,13 @@ pub fn ui(f: &mut Frame, app: &App, form: &mut TextArea) {
                 "Press Enter to play again / (q) to quit",
                 Style::default().fg(Color::Red),
             ),
-            GameState::Quit => Span::styled(
-                "Exiting game...",
-                Style::default().fg(Color::Red),
-            ),
+            GameState::Quit => Span::styled("Exiting game...", Style::default().fg(Color::Red)),
         }
     };
 
     let key_notes_footer =
-        Paragraph::new(Line::from(current_keys_hint).alignment(Alignment::Center)).block(Block::default().borders(Borders::ALL));
+        Paragraph::new(Line::from(current_keys_hint).alignment(Alignment::Center))
+            .block(Block::default().borders(Borders::ALL));
 
     f.render_widget(key_notes_footer, chunks[3]);
 }

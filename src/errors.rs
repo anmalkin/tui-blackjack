@@ -1,3 +1,5 @@
+#![allow(dead_code, unused_imports)]
+
 /// Error wrappers to handle various errors from user command line input.
 use core::fmt;
 use std::{
