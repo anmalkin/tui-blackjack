@@ -90,7 +90,7 @@ impl Hand {
         Hand { cards: Vec::new() }
     }
 
-    pub fn add_card(&mut self) {
+    pub fn draw(&mut self) {
         self.cards.push(Card::new());
     }
 
@@ -108,5 +108,37 @@ impl Hand {
 
     pub fn clear(&mut self) {
         self.cards.clear()
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn draw_cards() {
+        let mut hand = Hand::new();
+        for _ in 0..10 {
+            hand.draw();
+        }
+        assert_eq!(hand.count(), 10);
+        hand.clear();
+        assert_eq!(hand.count(), 0);
+    }
+
+    #[test]
+    fn get_first_card() {
+        let hand: Vec<Card> = vec![
+            Card {
+                suit: Suit::Hearts,
+                rank: Rank::Ace,
+            },
+            Card {
+                suit: Suit::Spades,
+                rank: Rank::Pip(2),
+            },
+        ];
+        matches!(hand.first().unwrap().suit, Suit::Hearts);
+        matches!(hand.first().unwrap().rank, Rank::Ace);
     }
 }

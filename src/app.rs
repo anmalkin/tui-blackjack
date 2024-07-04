@@ -29,12 +29,12 @@ pub struct App {
 impl App {
     pub fn new(bank: u32) -> Self {
         let mut player_hand = Hand::new();
-        player_hand.add_card();
-        player_hand.add_card();
+        player_hand.draw();
+        player_hand.draw();
 
         let mut dealer_hand = Hand::new();
-        dealer_hand.add_card();
-        dealer_hand.add_card();
+        dealer_hand.draw();
+        dealer_hand.draw();
 
         App {
             bank,
@@ -48,12 +48,12 @@ impl App {
     pub fn reset(&mut self) {
         self.current_bet = 0;
         self.player_hand.clear();
-        self.player_hand.add_card();
-        self.player_hand.add_card();
+        self.player_hand.draw();
+        self.player_hand.draw();
 
         self.dealer_hand.clear();
-        self.dealer_hand.add_card();
-        self.dealer_hand.add_card();
+        self.dealer_hand.draw();
+        self.dealer_hand.draw();
 
         self.state = GameState::PlayerTurn;
     }
@@ -69,7 +69,7 @@ impl App {
     pub fn run(&mut self, command: Command) {
         match command {
             Command::Hit => {
-                self.player_hand.add_card();
+                self.player_hand.draw();
                 if self.player_score() > BLACKJACK {
                     self.state = GameState::Lose;
                 }
@@ -78,7 +78,7 @@ impl App {
                 let mut dealer_score = self.dealer_score();
                 let player_score = self.player_score();
                 while dealer_score < DEALER_STAND {
-                    self.dealer_hand.add_card();
+                    self.dealer_hand.draw();
                     dealer_score = self.dealer_score();
                 }
 
@@ -248,59 +248,14 @@ mod test {
         assert_eq!(calc_score(&hand), 7);
 
         // Ensure scoring logic for aces is working appropriately
-        let ace1 = Card {
-            suit: Suit::Hearts,
-            rank: Rank::Ace,
-        };
-        let ace2 = Card {
-            suit: Suit::Spades,
-            rank: Rank::Ace,
-        };
-        let ace3 = Card {
-            suit: Suit::Diamonds,
-            rank: Rank::Ace,
-        };
-        let ace4 = Card {
-            suit: Suit::Clubs,
-            rank: Rank::Ace,
-        };
-        let ace5 = Card {
-            suit: Suit::Hearts,
-            rank: Rank::Ace,
-        };
-        let ace6 = Card {
-            suit: Suit::Spades,
-            rank: Rank::Ace,
-        };
-        let ace7 = Card {
-            suit: Suit::Diamonds,
-            rank: Rank::Ace,
-        };
-        let ace8 = Card {
-            suit: Suit::Clubs,
-            rank: Rank::Ace,
-        };
-        let ace9 = Card {
-            suit: Suit::Hearts,
-            rank: Rank::Ace,
-        };
-        let ace10 = Card {
-            suit: Suit::Spades,
-            rank: Rank::Ace,
-        };
-        let ace11 = Card {
-            suit: Suit::Diamonds,
-            rank: Rank::Ace,
-        };
-        let ace12 = Card {
-            suit: Suit::Clubs,
-            rank: Rank::Ace,
-        };
-        let hand = Hand {
-            cards: vec![
-                ace1, ace2, ace3, ace4, ace5, ace6, ace7, ace8, ace9, ace10, ace11, ace12,
-            ],
-        };
+        let mut cards: Vec<Card> = Vec::new();
+        for _ in 1..13 {
+            cards.push(Card {
+                suit: Suit::Hearts,
+                rank: Rank::Ace,
+            })
+        }
+        let hand = Hand { cards };
         assert_eq!(calc_score(&hand), 12);
     }
 }
