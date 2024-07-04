@@ -18,7 +18,6 @@ const BLACKJACK: u8 = 21;
 const FACECARD: u8 = 10;
 const DEALER_STAND: u8 = 17;
 
-
 #[derive(Debug)]
 pub struct App {
     pub bank: u32,
@@ -157,8 +156,6 @@ fn calc_score(hand: &Hand) -> u8 {
     score
 }
 
-// Helper functions for displaying various inputs
-
 #[cfg(test)]
 mod test {
     use super::*;
@@ -186,5 +183,125 @@ mod test {
         let dealer_count = app.dealer_hand.count();
         assert_eq!(3, player_count);
         assert_eq!(2, dealer_count);
+    }
+
+    #[test]
+    fn stand() {
+        let mut app = App::default();
+        let old_player_score = app.player_score();
+        app.run(Command::Stand);
+        assert_eq!(old_player_score, app.player_score());
+        matches!(app.state, GameState::Win | GameState::Lose);
+    }
+
+    #[test]
+    fn calc_score_test() {
+        let jack_of_spades = Card {
+            suit: Suit::Spades,
+            rank: Rank::Jack,
+        };
+        let two_of_diamonds = Card {
+            suit: Suit::Diamonds,
+            rank: Rank::Pip(2),
+        };
+        let hand = Hand {
+            cards: vec![jack_of_spades, two_of_diamonds],
+        };
+        assert_eq!(calc_score(&hand), 12);
+
+        let ace_of_hearts = Card {
+            suit: Suit::Hearts,
+            rank: Rank::Ace,
+        };
+        let king_of_diamonds = Card {
+            suit: Suit::Diamonds,
+            rank: Rank::King,
+        };
+        let hand = Hand {
+            cards: vec![ace_of_hearts, king_of_diamonds],
+        };
+        assert_eq!(calc_score(&hand), 21);
+
+        let ace_of_hearts = Card {
+            suit: Suit::Hearts,
+            rank: Rank::Ace,
+        };
+        let ace_of_spades = Card {
+            suit: Suit::Spades,
+            rank: Rank::Ace,
+        };
+        let hand = Hand {
+            cards: vec![ace_of_hearts, ace_of_spades],
+        };
+        assert_eq!(calc_score(&hand), 12);
+
+        let three_of_hearts = Card {
+            suit: Suit::Hearts,
+            rank: Rank::Pip(3),
+        };
+        let four_of_clubs = Card {
+            suit: Suit::Hearts,
+            rank: Rank::Pip(4),
+        };
+        let hand = Hand {
+            cards: vec![three_of_hearts, four_of_clubs],
+        };
+        assert_eq!(calc_score(&hand), 7);
+
+        // Ensure scoring logic for aces is working appropriately
+        let ace1 = Card {
+            suit: Suit::Hearts,
+            rank: Rank::Ace,
+        };
+        let ace2 = Card {
+            suit: Suit::Spades,
+            rank: Rank::Ace,
+        };
+        let ace3 = Card {
+            suit: Suit::Diamonds,
+            rank: Rank::Ace,
+        };
+        let ace4 = Card {
+            suit: Suit::Clubs,
+            rank: Rank::Ace,
+        };
+        let ace5 = Card {
+            suit: Suit::Hearts,
+            rank: Rank::Ace,
+        };
+        let ace6 = Card {
+            suit: Suit::Spades,
+            rank: Rank::Ace,
+        };
+        let ace7 = Card {
+            suit: Suit::Diamonds,
+            rank: Rank::Ace,
+        };
+        let ace8 = Card {
+            suit: Suit::Clubs,
+            rank: Rank::Ace,
+        };
+        let ace9 = Card {
+            suit: Suit::Hearts,
+            rank: Rank::Ace,
+        };
+        let ace10 = Card {
+            suit: Suit::Spades,
+            rank: Rank::Ace,
+        };
+        let ace11 = Card {
+            suit: Suit::Diamonds,
+            rank: Rank::Ace,
+        };
+        let ace12 = Card {
+            suit: Suit::Clubs,
+            rank: Rank::Ace,
+        };
+        let hand = Hand {
+            cards: vec![
+                ace1, ace2, ace3, ace4, ace5, ace6, ace7, ace8, ace9, ace10, ace11, ace12,
+            ],
+        };
+        assert_eq!(calc_score(&hand), 12);
     }
 }
