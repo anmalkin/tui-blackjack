@@ -1,16 +1,5 @@
-#![allow(dead_code, unused_imports)]
-
-use core::{num, panic};
-use std::{
-    fmt::{Debug, Display},
-    io::{self, Write},
-};
-
 use crate::cards::*;
-use crate::errors::CliError;
 
-const PAYOUT: f32 = 1.0;
-const BLACKJACK_PAYOUT: f32 = 1.5;
 const ACE_HIGH: u8 = 11;
 const ACE_LOW: u8 = 1;
 const BLACKJACK: u8 = 21;

@@ -1,11 +1,8 @@
-#![allow(dead_code, unused_imports)]
-
 mod app;
 mod cards;
-mod errors;
 mod ui;
 
-use std::{error::Error, io, ops::Deref};
+use std::{error::Error, io};
 
 use crossterm::{
     event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode},
@@ -20,7 +17,7 @@ use ratatui::{
     Terminal,
 };
 
-use tui_textarea::{Input, Key, TextArea};
+use tui_textarea::TextArea;
 
 use crate::app::*;
 use crate::ui::ui;
