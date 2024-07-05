@@ -15,10 +15,12 @@ use crossterm::{
 
 use ratatui::{
     backend::{Backend, CrosstermBackend},
+    style::{Color, Style},
+    widgets::{Block, Borders},
     Terminal,
 };
 
-use tui_textarea::TextArea;
+use tui_textarea::{Input, Key, TextArea};
 
 use crate::app::*;
 use crate::ui::ui;
@@ -53,33 +55,72 @@ fn main() -> Result<(), Box<dyn Error>> {
 }
 
 pub fn run_app<B: Backend>(app: &mut App, terminal: &mut Terminal<B>) -> io::Result<()> {
-    let mut bet_form = TextArea::default();
+    let mut textarea = TextArea::default();
+    textarea.set_cursor_line_style(Style::default());
+    textarea.set_style(Style::default());
+    textarea.set_block(Block::default().borders(Borders::ALL).title("Place bet"));
+    let mut is_valid = true;
 
     loop {
-        terminal.draw(|f| ui(f, app, &mut bet_form));
+        terminal.draw(|f| ui(f, app, &mut textarea))?;
 
         if let Event::Key(key) = event::read()? {
             if key.kind == event::KeyEventKind::Release {
-                // Skip events that are not KeyEventKind::Press
                 continue;
             }
             match app.state {
-                GameState::EnterBet => match key.code {
-                    // TODO: Use tui-textarea for bet inputting
-                    KeyCode::Char(c) => {
-                        if c.is_digit(10) {
-                            todo!()
+                GameState::EnterBet => {
+                    match key.code {
+                        KeyCode::Esc => break,
+                        KeyCode::Enter if is_valid => {
+                            let bet = textarea.lines()[0].parse::<u32>().unwrap();
+                            app.place_bet(bet);
+                        }
+                        _ => {
+                            // TextArea::input returns if the input modified its text
+                            if textarea.input(key) {
+                                is_valid = validate(&mut textarea);
+                            }
                         }
                     }
-                    _ => continue,
-                },
-                GameState::PlayerTurn => todo!(),
+                }
+                GameState::PlayerTurn => {
+                    if let Event::Key(key) = event::read()? {
+                        match key.code {
+                            KeyCode::Char('q') => break,
+                            KeyCode::Char('h') => app.run(Command::Hit),
+                            KeyCode::Char('s') => app.run(Command::Stand),
+                            _ => {}
+                        }
+                    }
+                }
                 GameState::Win => todo!(),
                 GameState::Lose => todo!(),
                 GameState::Quit => todo!(),
             }
         }
-        break; // TODO: Finish main loop implementation
     }
     Ok(())
+}
+
+fn validate(textarea: &mut TextArea) -> bool {
+    if textarea.lines()[0].parse::<u32>().is_err() {
+        textarea.set_style(Style::default().fg(Color::LightRed));
+        textarea.set_block(
+            Block::default()
+                .borders(Borders::ALL)
+                .title("Error: Invalid input")
+                .border_style(Style::default().fg(Color::LightRed)),
+        );
+        false
+    } else {
+        textarea.set_style(Style::default().fg(Color::LightGreen));
+        textarea.set_block(
+            Block::default()
+                .borders(Borders::ALL)
+                .title("OK")
+                .border_style(Style::default().fg(Color::LightGreen)),
+        );
+        true
+    }
 }

@@ -28,7 +28,9 @@ pub fn ui(f: &mut Frame, app: &App, form: &mut TextArea) {
         .style(Style::default());
 
     let title = Paragraph::new(
-        Line::from("Command Line Blackjack").alignment(Alignment::Center).fg(Color::Green),
+        Line::from("Command Line Blackjack")
+            .fg(Color::Blue)
+            .centered()
     )
     .block(title_block);
 
@@ -53,20 +55,17 @@ pub fn ui(f: &mut Frame, app: &App, form: &mut TextArea) {
     f.render_widget(player_block, player_area);
 
     // Input bet
-    let bet_area = centered_rect(50, 25, player_area);
-    let bet_block = Block::default()
-        .title("Place bet")
-        .borders(Borders::ALL)
-        .style(Style::default().bg(Color::Yellow).fg(Color::Black));
-    form.set_block(bet_block);
-    let bet_form = form.widget();
-    f.render_widget(bet_form, bet_area);
+    if let GameState::EnterBet = app.state {
+        let bet_area = centered_rect(50, 25, player_area);
+        let bet_form = form.widget();
+        f.render_widget(bet_form, bet_area);
+    }
 
     // Footer with allowed commands
     let current_keys_hint = {
         match app.state {
             GameState::EnterBet => {
-                Span::styled("Input bet and press enter", Style::default().fg(Color::Red))
+                Span::styled("Enter to place bet / Escape to quit game", Style::default())
             }
             GameState::PlayerTurn => Span::styled(
                 "(h) to hit / (s) to stand / (q) to quit game",
@@ -84,9 +83,11 @@ pub fn ui(f: &mut Frame, app: &App, form: &mut TextArea) {
         }
     };
 
-    let key_notes_footer =
-        Paragraph::new(Line::from(current_keys_hint).alignment(Alignment::Center))
-            .block(Block::default().borders(Borders::ALL));
+    let key_notes_footer = Paragraph::new(Line::from(current_keys_hint).centered()).block(
+        Block::default()
+            .borders(Borders::ALL)
+            .title("Player commands"),
+    );
 
     f.render_widget(key_notes_footer, chunks[3]);
 }

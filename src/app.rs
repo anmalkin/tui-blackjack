@@ -45,6 +45,12 @@ impl App {
         }
     }
 
+    pub fn place_bet(&mut self, bet: u32) {
+        self.current_bet = bet;
+        eprintln!("Current bet is {}", bet);
+        self.state = GameState::PlayerTurn;
+    }
+
     pub fn reset(&mut self) {
         self.current_bet = 0;
         self.player_hand.clear();
@@ -100,7 +106,7 @@ impl App {
 /// Default bank amount set to $100
 impl Default for App {
     fn default() -> Self {
-        App::new(0)
+        App::new(100)
     }
 }
 
