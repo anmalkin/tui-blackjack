@@ -28,7 +28,7 @@ pub fn ui(f: &mut Frame, app: &App, form: &mut TextArea) {
     let title = Paragraph::new(
         Line::from("Command Line Blackjack")
             .fg(Color::Blue)
-            .centered()
+            .centered(),
     )
     .block(title_block);
 
@@ -40,8 +40,8 @@ pub fn ui(f: &mut Frame, app: &App, form: &mut TextArea) {
         .title("Dealer")
         .borders(Borders::ALL)
         .style(Style::default().bg(Color::DarkGray));
-
-    f.render_widget(dealer_block, dealer_area);
+    let dealer_shown_card = Paragraph::new(format!("{}", app.dealer_hand.first().unwrap())).block(dealer_block);
+    f.render_widget(dealer_shown_card, dealer_area);
 
     // Player view
     let player_area = centered_rect(50, 75, chunks[2]);
@@ -69,14 +69,12 @@ pub fn ui(f: &mut Frame, app: &App, form: &mut TextArea) {
                 "(h) to hit / (s) to stand / (q) to quit game",
                 Style::default(),
             ),
-            GameState::Win => Span::styled(
-                "Press Enter to play again / (q) to quit",
-                Style::default(),
-            ),
-            GameState::Lose => Span::styled(
-                "Press Enter to play again / (q) to quit",
-                Style::default(),
-            ),
+            GameState::Win => {
+                Span::styled("Press Enter to play again / (q) to quit", Style::default())
+            }
+            GameState::Lose => {
+                Span::styled("Press Enter to play again / (q) to quit", Style::default())
+            }
         }
     };
 
