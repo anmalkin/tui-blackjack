@@ -47,7 +47,6 @@ impl App {
 
     pub fn place_bet(&mut self, bet: u32) {
         self.current_bet = bet;
-        eprintln!("Current bet is {}", bet);
         self.state = GameState::PlayerTurn;
     }
 
@@ -61,7 +60,7 @@ impl App {
         self.dealer_hand.draw();
         self.dealer_hand.draw();
 
-        self.state = GameState::PlayerTurn;
+        self.state = GameState::EnterBet;
     }
 
     pub fn player_score(&self) -> u8 {
@@ -116,7 +115,6 @@ pub enum GameState {
     PlayerTurn,
     Win,
     Lose,
-    Quit,
 }
 
 #[derive(Debug)]

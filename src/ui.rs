@@ -69,17 +69,16 @@ pub fn ui(f: &mut Frame, app: &App, form: &mut TextArea) {
             }
             GameState::PlayerTurn => Span::styled(
                 "(h) to hit / (s) to stand / (q) to quit game",
-                Style::default().fg(Color::Red),
+                Style::default(),
             ),
             GameState::Win => Span::styled(
                 "Press Enter to play again / (q) to quit",
-                Style::default().fg(Color::Red),
+                Style::default(),
             ),
             GameState::Lose => Span::styled(
                 "Press Enter to play again / (q) to quit",
-                Style::default().fg(Color::Red),
+                Style::default(),
             ),
-            GameState::Quit => Span::styled("Exiting game...", Style::default().fg(Color::Red)),
         }
     };
 

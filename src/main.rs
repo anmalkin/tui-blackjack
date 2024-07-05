@@ -5,7 +5,7 @@ mod cards;
 mod errors;
 mod ui;
 
-use std::{error::Error, io};
+use std::{error::Error, io, ops::Deref};
 
 use crossterm::{
     event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode},
@@ -79,48 +79,71 @@ pub fn run_app<B: Backend>(app: &mut App, terminal: &mut Terminal<B>) -> io::Res
                         _ => {
                             // TextArea::input returns if the input modified its text
                             if textarea.input(key) {
-                                is_valid = validate(&mut textarea);
+                                is_valid = validate(&mut textarea, app);
                             }
                         }
                     }
                 }
-                GameState::PlayerTurn => {
-                    if let Event::Key(key) = event::read()? {
-                        match key.code {
-                            KeyCode::Char('q') => break,
-                            KeyCode::Char('h') => app.run(Command::Hit),
-                            KeyCode::Char('s') => app.run(Command::Stand),
-                            _ => {}
-                        }
-                    }
-                }
-                GameState::Win => todo!(),
-                GameState::Lose => todo!(),
-                GameState::Quit => todo!(),
+                GameState::PlayerTurn => match key.code {
+                    KeyCode::Char('q') => break,
+                    KeyCode::Char('h') => app.run(Command::Hit),
+                    KeyCode::Char('s') => app.run(Command::Stand),
+                    _ => {}
+                },
+                // Handle both win and lose cases
+                _ => match key.code {
+                    KeyCode::Enter => app.reset(),
+                    KeyCode::Char('q') => break,
+                    _ => {}
+                },
             }
         }
     }
     Ok(())
 }
 
-fn validate(textarea: &mut TextArea) -> bool {
-    if textarea.lines()[0].parse::<u32>().is_err() {
-        textarea.set_style(Style::default().fg(Color::LightRed));
-        textarea.set_block(
-            Block::default()
-                .borders(Borders::ALL)
-                .title("Error: Invalid input")
-                .border_style(Style::default().fg(Color::LightRed)),
-        );
-        false
-    } else {
-        textarea.set_style(Style::default().fg(Color::LightGreen));
-        textarea.set_block(
-            Block::default()
-                .borders(Borders::ALL)
-                .title("OK")
-                .border_style(Style::default().fg(Color::LightGreen)),
-        );
-        true
+fn validate(textarea: &mut TextArea, app: &App) -> bool {
+    let bet = textarea.lines()[0].parse::<u32>();
+    match bet {
+        Ok(bet) => {
+            if bet > app.bank {
+                textarea.set_style(Style::default().fg(Color::LightRed));
+                textarea.set_block(
+                    Block::default()
+                        .borders(Borders::ALL)
+                        .title("Error: Too big!")
+                        .border_style(Style::default().fg(Color::LightRed)),
+                );
+                false
+            } else if bet == 0 {
+                textarea.set_style(Style::default().fg(Color::LightRed));
+                textarea.set_block(
+                    Block::default()
+                        .borders(Borders::ALL)
+                        .title("Error: Bet must be greater than 0")
+                        .border_style(Style::default().fg(Color::LightRed)),
+                );
+                false
+            } else {
+                textarea.set_style(Style::default().fg(Color::LightGreen));
+                textarea.set_block(
+                    Block::default()
+                        .borders(Borders::ALL)
+                        .title("OK")
+                        .border_style(Style::default().fg(Color::LightGreen)),
+                );
+                true
+            }
+        }
+        Err(_) => {
+            textarea.set_style(Style::default().fg(Color::LightRed));
+            textarea.set_block(
+                Block::default()
+                    .borders(Borders::ALL)
+                    .title("Error: Invalid input")
+                    .border_style(Style::default().fg(Color::LightRed)),
+            );
+            false
+        }
     }
 }
