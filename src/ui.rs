@@ -13,10 +13,10 @@ pub fn ui(f: &mut Frame, app: &App, form: &mut TextArea) {
     let chunks = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
-            Constraint::Min(4),
+            Constraint::Min(3),
             Constraint::Percentage(50),
             Constraint::Percentage(50),
-            Constraint::Min(4),
+            Constraint::Min(3),
         ])
         .split(f.size());
 
@@ -64,7 +64,7 @@ pub fn ui(f: &mut Frame, app: &App, form: &mut TextArea) {
             .block(dealer_block);
             f.render_widget(upcard, dealer_area);
             let mut player_cards: Vec<Line> = Vec::new();
-            for card in &app.player_hand.cards {
+            for card in &app.player_hand {
                 player_cards.push(Line::from(format!("{card}\n")));
             }
             player_cards.push(Line::from(format!("Score: {}", app.player_score())));
@@ -80,25 +80,23 @@ pub fn ui(f: &mut Frame, app: &App, form: &mut TextArea) {
     let current_keys_hint = {
         match app.state {
             GameState::EnterBet => {
-                Span::styled("Enter to place bet / Escape to quit game", Style::default())
+                Span::styled("<Enter> to place bet / <Escape> to quit game", Style::default())
             }
             GameState::PlayerTurn => Span::styled(
-                "(h) to hit / (s) to stand / (q) to quit game",
+                "<h> to hit / <s> to stand / <q> to quit game",
                 Style::default(),
             ),
             GameState::Win => {
-                Span::styled("Press Enter to play again / (q) to quit", Style::default())
+                Span::styled("<Enter> to play again / <q> to quit", Style::default())
             }
             GameState::Lose => {
-                Span::styled("Press Enter to play again / (q) to quit", Style::default())
+                Span::styled("<Enter> to play again / <q> to quit", Style::default())
             }
         }
     };
 
-    let key_notes_footer = Paragraph::new(Line::from(current_keys_hint).centered()).block(
+    let key_notes_footer = Paragraph::new(Line::from(current_keys_hint).centered().italic()).block(
         Block::default()
-            .borders(Borders::ALL)
-            .title("Player commands"),
     );
 
     f.render_widget(key_notes_footer, chunks[3]);

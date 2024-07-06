@@ -9,21 +9,16 @@ const DEALER_STAND: u8 = 17;
 #[derive(Debug)]
 pub struct App {
     pub bank: u32,
-    pub player_hand: Hand,
-    pub dealer_hand: Hand,
+    pub player_hand: Vec<Card>,
+    pub dealer_hand: Vec<Card>,
     pub current_bet: u32,
     pub state: GameState,
 }
 
 impl App {
     pub fn new(bank: u32) -> Self {
-        let mut player_hand = Hand::new();
-        player_hand.draw();
-        player_hand.draw();
-
-        let mut dealer_hand = Hand::new();
-        dealer_hand.draw();
-        dealer_hand.draw();
+        let player_hand = vec![Card::new(), Card::new()];
+        let dealer_hand = vec![Card::new(), Card::new()];
 
         App {
             bank,
@@ -42,12 +37,12 @@ impl App {
     pub fn reset(&mut self) {
         self.current_bet = 0;
         self.player_hand.clear();
-        self.player_hand.draw();
-        self.player_hand.draw();
+        self.player_hand.push(Card::new());
+        self.player_hand.push(Card::new());
 
         self.dealer_hand.clear();
-        self.dealer_hand.draw();
-        self.dealer_hand.draw();
+        self.dealer_hand.push(Card::new());
+        self.dealer_hand.push(Card::new());
 
         self.state = GameState::EnterBet;
     }
@@ -63,7 +58,7 @@ impl App {
     pub fn run(&mut self, command: Command) {
         match command {
             Command::Hit => {
-                self.player_hand.draw();
+                self.player_hand.push(Card::new());
                 if self.player_score() > BLACKJACK {
                     self.state = GameState::Lose;
                 }
@@ -72,7 +67,7 @@ impl App {
                 let mut dealer_score = self.dealer_score();
                 let player_score = self.player_score();
                 while dealer_score < DEALER_STAND {
-                    self.dealer_hand.draw();
+                    self.dealer_hand.push(Card::new());
                     dealer_score = self.dealer_score();
                 }
 
@@ -115,10 +110,10 @@ pub enum Command {
 
 /// Calculate current score of blackjack hand. Aces are scored as 11 unless the total score is
 /// above 21, in which case they are scored as 1.
-fn calc_score(hand: &Hand) -> u8 {
+fn calc_score(hand: &[Card]) -> u8 {
     let mut aces = 0;
     let mut score = 0;
-    for card in hand.cards.iter() {
+    for card in hand {
         match card.rank {
             Rank::Ace => {
                 aces += 1;
@@ -154,8 +149,8 @@ mod test {
     #[test]
     fn deal() {
         let app = App::default();
-        let player_count = app.player_hand.count();
-        let dealer_count = app.dealer_hand.count();
+        let player_count = app.player_hand.len();
+        let dealer_count = app.dealer_hand.len();
         assert_eq!(2, player_count);
         assert_eq!(2, dealer_count);
         assert!(app.player_score() > 1);
@@ -171,8 +166,8 @@ mod test {
         let new_player_score = app.player_score();
         assert!(new_player_score > old_player_score);
 
-        let player_count = app.player_hand.count();
-        let dealer_count = app.dealer_hand.count();
+        let player_count = app.player_hand.len();
+        let dealer_count = app.dealer_hand.len();
         assert_eq!(3, player_count);
         assert_eq!(2, dealer_count);
     }
@@ -196,9 +191,7 @@ mod test {
             suit: Suit::Diamonds,
             rank: Rank::Pip(2),
         };
-        let hand = Hand {
-            cards: vec![jack_of_spades, two_of_diamonds],
-        };
+        let hand = vec![jack_of_spades, two_of_diamonds];
         assert_eq!(calc_score(&hand), 12);
 
         let ace_of_hearts = Card {
@@ -209,9 +202,7 @@ mod test {
             suit: Suit::Diamonds,
             rank: Rank::King,
         };
-        let hand = Hand {
-            cards: vec![ace_of_hearts, king_of_diamonds],
-        };
+        let hand = vec![ace_of_hearts, king_of_diamonds];
         assert_eq!(calc_score(&hand), 21);
 
         let ace_of_hearts = Card {
@@ -222,9 +213,7 @@ mod test {
             suit: Suit::Spades,
             rank: Rank::Ace,
         };
-        let hand = Hand {
-            cards: vec![ace_of_hearts, ace_of_spades],
-        };
+        let hand = vec![ace_of_hearts, ace_of_spades];
         assert_eq!(calc_score(&hand), 12);
 
         let three_of_hearts = Card {
@@ -235,9 +224,7 @@ mod test {
             suit: Suit::Hearts,
             rank: Rank::Pip(4),
         };
-        let hand = Hand {
-            cards: vec![three_of_hearts, four_of_clubs],
-        };
+        let hand = vec![three_of_hearts, four_of_clubs];
         assert_eq!(calc_score(&hand), 7);
 
         // Ensure scoring logic for aces is working appropriately
@@ -248,7 +235,6 @@ mod test {
                 rank: Rank::Ace,
             })
         }
-        let hand = Hand { cards };
-        assert_eq!(calc_score(&hand), 12);
+        assert_eq!(calc_score(&cards), 12);
     }
 }
