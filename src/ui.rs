@@ -34,29 +34,46 @@ pub fn ui(f: &mut Frame, app: &App, form: &mut TextArea) {
 
     f.render_widget(title, chunks[0]);
 
-    // Dealer view
-    let dealer_area = centered_rect(50, 75, chunks[1]);
-    let dealer_block = Block::default()
-        .title("Dealer")
-        .borders(Borders::ALL)
-        .style(Style::default().bg(Color::DarkGray));
-    let dealer_shown_card = Paragraph::new(format!("{}", app.dealer_hand.first().unwrap())).block(dealer_block);
-    f.render_widget(dealer_shown_card, dealer_area);
-
-    // Player view
+    // Player block
     let player_area = centered_rect(50, 75, chunks[2]);
     let player_block = Block::default()
         .title("Player")
         .borders(Borders::ALL)
         .style(Style::default().bg(Color::DarkGray));
 
-    f.render_widget(player_block, player_area);
+    // Dealer block
+    let dealer_area = centered_rect(50, 75, chunks[1]);
+    let dealer_block = Block::default()
+        .title("Dealer")
+        .borders(Borders::ALL)
+        .style(Style::default().bg(Color::DarkGray));
 
-    // Input bet
-    if let GameState::EnterBet = app.state {
-        let bet_area = centered_rect(50, 25, player_area);
-        let bet_form = form.widget();
-        f.render_widget(bet_form, bet_area);
+    match app.state {
+        GameState::EnterBet => {
+            let bet_area = centered_rect(50, 25, player_area);
+            let bet_form = form.widget();
+            f.render_widget(player_block, player_area);
+            f.render_widget(dealer_block, dealer_area);
+            f.render_widget(bet_form, bet_area);
+        }
+        GameState::PlayerTurn => {
+            let upcard = Paragraph::new(format!(
+                "{}\n[HIDDEN CARD]",
+                app.dealer_hand.first().unwrap()
+            ))
+            .block(dealer_block);
+            f.render_widget(upcard, dealer_area);
+            let mut player_cards: Vec<Line> = Vec::new();
+            for card in &app.player_hand.cards {
+                player_cards.push(Line::from(format!("{card}\n")));
+            }
+            player_cards.push(Line::from(format!("Score: {}", app.player_score())));
+            let player_view = Paragraph::new(player_cards).block(player_block);
+            f.render_widget(player_view, player_area);
+        }
+        // TODO: Implement UI for winning/losing
+        GameState::Win => todo!(),
+        GameState::Lose => todo!(),
     }
 
     // Footer with allowed commands
