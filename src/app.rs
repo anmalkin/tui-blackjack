@@ -48,11 +48,15 @@ impl App {
     }
 
     pub fn player_score(&self) -> u8 {
-        calc_score(&self.player_hand)
+        calc_hand_score(&self.player_hand)
+    }
+
+    pub fn dealer_showing(&self) -> u8 {
+        calc_card_score(self.dealer_hand.first().unwrap())
     }
 
     pub fn dealer_score(&self) -> u8 {
-        calc_score(&self.dealer_hand)
+        calc_hand_score(&self.dealer_hand)
     }
 
     pub fn run(&mut self, command: Command) {
@@ -110,28 +114,14 @@ pub enum Command {
 
 /// Calculate current score of blackjack hand. Aces are scored as 11 unless the total score is
 /// above 21, in which case they are scored as 1.
-fn calc_score(hand: &[Card]) -> u8 {
+fn calc_hand_score(hand: &[Card]) -> u8 {
     let mut aces = 0;
     let mut score = 0;
     for card in hand {
-        match card.rank {
-            Rank::Ace => {
-                aces += 1;
-                score += ACE_HIGH;
-            }
-            Rank::Pip(num) => {
-                score += num;
-            }
-            Rank::Jack => {
-                score += FACECARD;
-            }
-            Rank::Queen => {
-                score += FACECARD;
-            }
-            Rank::King => {
-                score += FACECARD;
-            }
+        if let Rank::Ace = card.rank {
+            aces += 1;
         }
+        score += calc_card_score(card);
     }
 
     // Adjust Aces value downward if necessary
@@ -141,6 +131,14 @@ fn calc_score(hand: &[Card]) -> u8 {
         assert!(score >= 2);
     }
     score
+}
+
+fn calc_card_score(card: &Card) -> u8 {
+    match card.rank {
+        Rank::Ace => ACE_HIGH,
+        Rank::Pip(num) => num,
+        _ => FACECARD,
+    }
 }
 
 #[cfg(test)]
@@ -154,7 +152,7 @@ mod test {
         assert_eq!(2, player_count);
         assert_eq!(2, dealer_count);
         assert!(app.player_score() > 1);
-        assert!(app.dealer_score() > 1);
+        assert!(app.dealer_showing() > 1);
     }
 
     #[test]
@@ -192,7 +190,7 @@ mod test {
             rank: Rank::Pip(2),
         };
         let hand = vec![jack_of_spades, two_of_diamonds];
-        assert_eq!(calc_score(&hand), 12);
+        assert_eq!(calc_hand_score(&hand), 12);
 
         let ace_of_hearts = Card {
             suit: Suit::Hearts,
@@ -203,7 +201,7 @@ mod test {
             rank: Rank::King,
         };
         let hand = vec![ace_of_hearts, king_of_diamonds];
-        assert_eq!(calc_score(&hand), 21);
+        assert_eq!(calc_hand_score(&hand), 21);
 
         let ace_of_hearts = Card {
             suit: Suit::Hearts,
@@ -214,7 +212,7 @@ mod test {
             rank: Rank::Ace,
         };
         let hand = vec![ace_of_hearts, ace_of_spades];
-        assert_eq!(calc_score(&hand), 12);
+        assert_eq!(calc_hand_score(&hand), 12);
 
         let three_of_hearts = Card {
             suit: Suit::Hearts,
@@ -225,7 +223,7 @@ mod test {
             rank: Rank::Pip(4),
         };
         let hand = vec![three_of_hearts, four_of_clubs];
-        assert_eq!(calc_score(&hand), 7);
+        assert_eq!(calc_hand_score(&hand), 7);
 
         // Ensure scoring logic for aces is working appropriately
         let mut cards: Vec<Card> = Vec::new();
@@ -235,6 +233,6 @@ mod test {
                 rank: Rank::Ace,
             })
         }
-        assert_eq!(calc_score(&cards), 12);
+        assert_eq!(calc_hand_score(&cards), 12);
     }
 }

@@ -8,7 +8,7 @@ use ratatui::{
 use tui_textarea::TextArea;
 
 use crate::app::*;
-use crate::cards::Suit;
+use crate::cards::{Card, Suit};
 
 pub fn ui(f: &mut Frame, app: &App, form: &mut TextArea) {
     let chunks = Layout::default()
@@ -73,25 +73,16 @@ pub fn ui(f: &mut Frame, app: &App, form: &mut TextArea) {
             f.render_widget(bet_form, bet_area);
         }
         GameState::PlayerTurn => {
-            let upcard = app.dealer_hand.first().unwrap();
-            let color = match upcard.suit {
-                Suit::Hearts => Color::LightRed,
-                Suit::Diamonds => Color::LightRed,
-                _ => Color::Gray,
-            };
-            let upcard = Line::from(format!("{}", upcard)).fg(color).bold();
+            let upcard = display_card(app.dealer_hand.first().unwrap());
             let hole = Line::from("| HOLE CARD |");
-            let dealer_cards = Paragraph::new(vec![upcard, hole]).block(dealer_block);
+            let showing = Line::from(format!("Dealer showing: {}", app.dealer_showing()));
+            let blank = Line::from("");
+            let dealer_cards = Paragraph::new(vec![upcard, hole, blank, showing]).block(dealer_block);
             f.render_widget(dealer_cards, dealer_area);
 
             let mut player_cards: Vec<Line> = Vec::new();
             for card in &app.player_hand {
-                let color = match card.suit {
-                    Suit::Hearts => Color::LightRed,
-                    Suit::Diamonds => Color::LightRed,
-                    _ => Color::Gray,
-                };
-                player_cards.push(Line::from(format!("{card}")).fg(color).bold());
+                player_cards.push(display_card(card));
             }
             player_cards.push(Line::from(" "));
             player_cards.push(Line::from(format!("Score: {}", app.player_score())));
@@ -128,4 +119,13 @@ fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
             Constraint::Percentage((100 - percent_x) / 2),
         ])
         .split(popup_layout[1])[1] // Return the middle chunk
+}
+
+fn display_card(card: &Card) -> Line<'_> {
+    let color = match card.suit {
+        Suit::Hearts => Color::LightRed,
+        Suit::Diamonds => Color::LightRed,
+        _ => Color::Gray,
+    };
+    Line::from(format!("{}", card)).fg(color).bold()
 }
