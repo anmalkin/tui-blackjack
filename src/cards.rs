@@ -1,5 +1,10 @@
 use std::fmt::{Debug, Display};
 
+const SPADE_UNICODE: &str = "\u{2660}";
+const HEART_UNICODE: &str = "\u{2665}";
+const CLUB_UNICODE: &str = "\u{2663}";
+const DIAMOND_UNICODE: &str = "\u{2666}";
+
 #[derive(Debug)]
 pub enum Suit {
     Hearts,
@@ -57,19 +62,22 @@ impl Display for Card {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let rank = match self.rank {
             Rank::Ace => String::from("Ace"),
-            Rank::Pip(num) => num.to_string(),
-            Rank::Jack => String::from("Jack"),
-            Rank::Queen => String::from("Queen"),
-            Rank::King => String::from("King"),
+            Rank::Pip(10) => String::from("Ten"),
+            Rank::Pip(num) => {
+                format!(" {} ", num)
+            }
+            Rank::Jack => String::from(" J "),
+            Rank::Queen => String::from(" Q "),
+            Rank::King => String::from(" K "),
         };
 
         let suit = match self.suit {
-            Suit::Hearts => String::from("Hearts"),
-            Suit::Diamonds => String::from("Diamonds"),
-            Suit::Spades => String::from("Spades"),
-            Suit::Clubs => String::from("Clubs"),
+            Suit::Hearts => HEART_UNICODE,
+            Suit::Diamonds => DIAMOND_UNICODE,
+            Suit::Spades => SPADE_UNICODE,
+            Suit::Clubs => CLUB_UNICODE,
         };
 
-        write!(f, "[** {} of {} **]", rank, suit)
+        write!(f, "| {}  {}  {} |", suit, rank, suit)
     }
 }

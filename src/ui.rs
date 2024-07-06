@@ -8,6 +8,7 @@ use ratatui::{
 use tui_textarea::TextArea;
 
 use crate::app::*;
+use crate::cards::Suit;
 
 pub fn ui(f: &mut Frame, app: &App, form: &mut TextArea) {
     let chunks = Layout::default()
@@ -15,8 +16,8 @@ pub fn ui(f: &mut Frame, app: &App, form: &mut TextArea) {
         .constraints([
             Constraint::Min(3),
             Constraint::Percentage(50),
+            Constraint::Min(1),
             Constraint::Percentage(50),
-            Constraint::Min(3),
         ])
         .split(f.size());
 
@@ -26,25 +27,40 @@ pub fn ui(f: &mut Frame, app: &App, form: &mut TextArea) {
         .style(Style::default());
 
     let title = Paragraph::new(
-        Line::from("Command Line Blackjack")
+        Line::from("COMMAND LINE BLACKJACK")
             .fg(Color::Blue)
-            .centered(),
+            .centered()
+            .bold(),
     )
     .block(title_block);
 
     f.render_widget(title, chunks[0]);
 
-    // Player block
-    let player_area = centered_rect(50, 75, chunks[2]);
-    let player_block = Block::default()
-        .title("Player")
-        .borders(Borders::ALL)
-        .style(Style::default().bg(Color::DarkGray));
-
     // Dealer block
     let dealer_area = centered_rect(50, 75, chunks[1]);
     let dealer_block = Block::default()
         .title("Dealer")
+        .borders(Borders::ALL)
+        .style(Style::default().bg(Color::DarkGray));
+
+    let command_hint = {
+        match app.state {
+            GameState::EnterBet => "<Enter> to place bet / <Escape> to quit game",
+            GameState::PlayerTurn => "<h> to hit / <s> to stand / <q> to quit game",
+            _ => "<Enter> to play again / <q> to quit",
+        }
+    };
+
+    let command_hint = Span::styled(command_hint, Style::default().fg(Color::Yellow));
+    let command_hint =
+        Paragraph::new(Line::from(command_hint).centered().bold()).block(Block::default());
+
+    f.render_widget(command_hint, chunks[2]);
+
+    // Player block
+    let player_area = centered_rect(50, 75, chunks[3]);
+    let player_block = Block::default()
+        .title("Player")
         .borders(Borders::ALL)
         .style(Style::default().bg(Color::DarkGray));
 
@@ -57,16 +73,27 @@ pub fn ui(f: &mut Frame, app: &App, form: &mut TextArea) {
             f.render_widget(bet_form, bet_area);
         }
         GameState::PlayerTurn => {
-            let upcard = Paragraph::new(format!(
-                "{}\n[HIDDEN CARD]",
-                app.dealer_hand.first().unwrap()
-            ))
-            .block(dealer_block);
-            f.render_widget(upcard, dealer_area);
+            let upcard = app.dealer_hand.first().unwrap();
+            let color = match upcard.suit {
+                Suit::Hearts => Color::LightRed,
+                Suit::Diamonds => Color::LightRed,
+                _ => Color::Gray,
+            };
+            let upcard = Line::from(format!("{}", upcard)).fg(color).bold();
+            let hole = Line::from("| HOLE CARD |");
+            let dealer_cards = Paragraph::new(vec![upcard, hole]).block(dealer_block);
+            f.render_widget(dealer_cards, dealer_area);
+
             let mut player_cards: Vec<Line> = Vec::new();
             for card in &app.player_hand {
-                player_cards.push(Line::from(format!("{card}\n")));
+                let color = match card.suit {
+                    Suit::Hearts => Color::LightRed,
+                    Suit::Diamonds => Color::LightRed,
+                    _ => Color::Gray,
+                };
+                player_cards.push(Line::from(format!("{card}")).fg(color).bold());
             }
+            player_cards.push(Line::from(" "));
             player_cards.push(Line::from(format!("Score: {}", app.player_score())));
             let player_view = Paragraph::new(player_cards).block(player_block);
             f.render_widget(player_view, player_area);
@@ -76,30 +103,8 @@ pub fn ui(f: &mut Frame, app: &App, form: &mut TextArea) {
         GameState::Lose => todo!(),
     }
 
-    // Footer with allowed commands
-    let current_keys_hint = {
-        match app.state {
-            GameState::EnterBet => {
-                Span::styled("<Enter> to place bet / <Escape> to quit game", Style::default())
-            }
-            GameState::PlayerTurn => Span::styled(
-                "<h> to hit / <s> to stand / <q> to quit game",
-                Style::default(),
-            ),
-            GameState::Win => {
-                Span::styled("<Enter> to play again / <q> to quit", Style::default())
-            }
-            GameState::Lose => {
-                Span::styled("<Enter> to play again / <q> to quit", Style::default())
-            }
-        }
-    };
-
-    let key_notes_footer = Paragraph::new(Line::from(current_keys_hint).centered().italic()).block(
-        Block::default()
-    );
-
-    f.render_widget(key_notes_footer, chunks[3]);
+    // Bank balance
+    //
 }
 
 /// helper function to create a centered rect using up certain percentage of the available rect `r`
