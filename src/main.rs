@@ -88,6 +88,10 @@ pub fn run_app<B: Backend>(app: &mut App, terminal: &mut Terminal<B>) -> io::Res
                     _ => {}
                 },
                 // Handle both win and lose cases
+                // TODO: Need to fix this so the loop continues
+                GameState::DealerTurn => {
+                    app.run(Command::AdvanceDealer)
+                },
                 _ => match key.code {
                     KeyCode::Enter => app.reset(),
                     KeyCode::Char('q') => break,

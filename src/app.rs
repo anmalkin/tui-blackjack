@@ -67,22 +67,20 @@ impl App {
                     self.state = GameState::Lose;
                 }
             }
-            Command::Stand => {
-                let mut dealer_score = self.dealer_score();
-                let player_score = self.player_score();
-                while dealer_score < DEALER_STAND {
+            Command::Stand => self.state = GameState::DealerTurn,
+            Command::AdvanceDealer => {
+                if self.dealer_score() < DEALER_STAND {
                     self.dealer_hand.push(Card::new());
-                    dealer_score = self.dealer_score();
-                }
-
-                if dealer_score > BLACKJACK || dealer_score < player_score {
+                } else if self.dealer_score() > BLACKJACK
+                    || self.dealer_score() < self.player_score()
+                {
                     // Ensure dealer does not run after player has already lost
                     assert!(self.player_score() <= BLACKJACK);
                     self.state = GameState::Win;
-                    self.bank += self.current_bet
+                    self.bank += self.current_bet;
                 } else {
                     self.state = GameState::Lose;
-                    self.bank -= self.current_bet
+                    self.bank -= self.current_bet;
                 }
             }
             Command::Split => todo!(),
@@ -101,6 +99,7 @@ impl Default for App {
 pub enum GameState {
     EnterBet,
     PlayerTurn,
+    DealerTurn,
     Win,
     Lose,
 }
@@ -109,6 +108,7 @@ pub enum GameState {
 pub enum Command {
     Hit,
     Stand,
+    AdvanceDealer,
     Split,
 }
 
