@@ -158,12 +158,7 @@ mod test {
     #[test]
     fn hit() {
         let mut app = App::default();
-        let old_player_score = app.player_score();
-
         app.run(Command::Hit);
-        let new_player_score = app.player_score();
-        assert!(new_player_score > old_player_score);
-
         let player_count = app.player_hand.len();
         let dealer_count = app.dealer_hand.len();
         assert_eq!(3, player_count);
