@@ -47,8 +47,7 @@ pub fn ui(f: &mut Frame, app: &App, form: &mut TextArea) {
         match app.state {
             GameState::EnterBet => "<Enter> to place bet / <Escape> to quit game",
             GameState::PlayerTurn => "<h> to hit / <s> to stand / <q> to quit game",
-            // TODO: Automate dealer turn
-            GameState::DealerTurn => "Press any key to advance dealer",
+            GameState::DealerTurn => "Dealer's play...",
             _ => "<Enter> to play again / <q> to quit",
         }
     };

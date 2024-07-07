@@ -2,7 +2,7 @@ mod app;
 mod cards;
 mod ui;
 
-use std::{error::Error, io};
+use std::{error::Error, io, thread::sleep, time::Duration};
 
 use crossterm::{
     event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode},
@@ -61,6 +61,13 @@ pub fn run_app<B: Backend>(app: &mut App, terminal: &mut Terminal<B>) -> io::Res
     loop {
         terminal.draw(|f| ui(f, app, &mut textarea))?;
 
+        // Run dealer animation
+        if let GameState::DealerTurn = app.state {
+            sleep(Duration::from_secs(1));
+            app.run(Command::AdvanceDealer);
+            continue;
+        }
+
         if let Event::Key(key) = event::read()? {
             if key.kind == event::KeyEventKind::Release {
                 continue;
@@ -87,11 +94,10 @@ pub fn run_app<B: Backend>(app: &mut App, terminal: &mut Terminal<B>) -> io::Res
                     KeyCode::Char('s') => app.run(Command::Stand),
                     _ => {}
                 },
-                // Handle both win and lose cases
-                // TODO: Need to fix this so the loop continues
-                GameState::DealerTurn => {
-                    app.run(Command::AdvanceDealer)
+                GameState::DealerTurn => if let KeyCode::Char('q') = key.code {
+                    break
                 },
+                // Handle both win and lose cases
                 _ => match key.code {
                     KeyCode::Enter => app.reset(),
                     KeyCode::Char('q') => break,
