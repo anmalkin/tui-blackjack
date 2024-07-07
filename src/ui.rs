@@ -33,7 +33,7 @@ pub fn ui(f: &mut Frame, app: &App, form: &mut TextArea) {
             .bold(),
     )
     .block(title_block);
-    
+
     f.render_widget(title, chunks[0]);
 
     let command_hint = {
@@ -63,13 +63,14 @@ pub fn ui(f: &mut Frame, app: &App, form: &mut TextArea) {
         .borders(Borders::ALL)
         .style(Style::default().bg(Color::DarkGray));
 
+    let player_sub_area = centered_rect(50, 25, player_area);
+
     match app.state {
         GameState::EnterBet => {
-            let bet_area = centered_rect(50, 25, player_area);
             let bet_form = form.widget();
             f.render_widget(player_block, player_area);
             f.render_widget(dealer_block, dealer_area);
-            f.render_widget(bet_form, bet_area);
+            f.render_widget(bet_form, player_sub_area);
         }
         GameState::PlayerTurn => {
             form.delete_line_by_head();
@@ -80,14 +81,17 @@ pub fn ui(f: &mut Frame, app: &App, form: &mut TextArea) {
             render_dealer(f, app, dealer_area, false);
             render_player(f, app, player_area);
         }
-        // TODO: Implement UI for winning/losing
         GameState::Win => {
+            let win_text = Line::from("YOU WIN!").fg(Color::LightGreen).centered();
             render_player(f, app, player_area);
             render_dealer(f, app, dealer_area, false);
+            f.render_widget(win_text, player_sub_area);
         }
         GameState::Lose => {
+            let lose_text = Line::from("Better luck next time!").fg(Color::LightRed).centered();
             render_player(f, app, player_area);
             render_dealer(f, app, dealer_area, false);
+            f.render_widget(lose_text, player_sub_area);
         }
     }
 
