@@ -130,8 +130,7 @@ pub fn ui(f: &mut Frame, app: &App, form: &mut TextArea) {
 
         GameState::Blackjack => {
             let win_text = Paragraph::new(vec![
-                // TODO: Update Blackjack payout
-                Line::from(format!("Blackjack! +${}", app.current_bet)).fg(Color::LightGreen).bold(),
+                Line::from(format!("Blackjack! +${}", app.blackjack_payout)).fg(Color::LightGreen).bold(),
                 Line::from(""),
                 Line::from("Press <Enter> to play again / <q> to quit").fg(Color::Yellow),
             ])

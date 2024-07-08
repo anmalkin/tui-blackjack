@@ -12,6 +12,7 @@ pub struct App {
     pub player_hand: Vec<Card>,
     pub dealer_hand: Vec<Card>,
     pub current_bet: u32,
+    pub blackjack_payout: u32,
     pub state: GameState,
 }
 
@@ -25,12 +26,14 @@ impl App {
             player_hand,
             dealer_hand,
             current_bet: 0,
+            blackjack_payout: 0,
             state: GameState::EnterBet,
         }
     }
 
     pub fn place_bet(&mut self, bet: u32) {
         self.current_bet = bet;
+        self.blackjack_payout = bet * 3 / 2;
         self.state = GameState::PlayerTurn;
     }
 
@@ -39,6 +42,7 @@ impl App {
         self.dealer_hand = vec![Card::new(), Card::new()];
         if calc_hand_score(&self.player_hand) == BLACKJACK {
             self.state = GameState::Blackjack;
+            self.bank += self.blackjack_payout;
         } else {
             self.state = GameState::PlayerTurn;
         }
@@ -70,6 +74,9 @@ impl App {
                 if self.player_score() > BLACKJACK {
                     self.state = GameState::Lose;
                     self.bank -= self.current_bet;
+                }
+                if self.player_score() == BLACKJACK {
+                    self.state = GameState::DealerTurn;
                 }
             }
             Command::Stand => self.state = GameState::DealerTurn,
