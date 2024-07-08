@@ -61,8 +61,8 @@ impl Card {
 impl Display for Card {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let rank = match self.rank {
-            Rank::Ace => String::from("Ace"),
-            Rank::Pip(10) => String::from("Ten"),
+            Rank::Ace => String::from(" A "),
+            Rank::Pip(10) => String::from(" T "),
             Rank::Pip(num) => {
                 format!(" {} ", num)
             }

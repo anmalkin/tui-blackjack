@@ -65,6 +65,7 @@ impl App {
                 self.player_hand.push(Card::new());
                 if self.player_score() > BLACKJACK {
                     self.state = GameState::Lose;
+                    self.bank -= self.current_bet;
                 }
             }
             Command::Stand => self.state = GameState::DealerTurn,
