@@ -53,15 +53,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
 pub fn run_app<B: Backend>(app: &mut App, terminal: &mut Terminal<B>) -> io::Result<()> {
     let mut textarea = TextArea::default();
-    textarea.set_cursor_line_style(Style::default());
-    textarea.set_style(Style::default());
-    textarea.set_block(
-        Block::default()
-            .borders(Borders::ALL)
-            .title("Place bet")
-            .border_style(Style::default().fg(Color::Yellow)),
-    );
-    let mut is_valid = true;
+    let mut is_valid = validate(&mut textarea, app);
 
     loop {
         terminal.draw(|f| ui(f, app, &mut textarea))?;
@@ -84,6 +76,7 @@ pub fn run_app<B: Backend>(app: &mut App, terminal: &mut Terminal<B>) -> io::Res
                         KeyCode::Enter if is_valid => {
                             let bet = textarea.lines()[0].parse::<u32>().unwrap();
                             app.place_bet(bet);
+                            app.start();
                         }
                         _ => {
                             // TextArea::input returns if the input modified its text
@@ -118,6 +111,19 @@ pub fn run_app<B: Backend>(app: &mut App, terminal: &mut Terminal<B>) -> io::Res
 
 fn validate(textarea: &mut TextArea, app: &App) -> bool {
     let bet = textarea.lines()[0].parse::<u32>();
+
+    if textarea.is_empty() {
+        textarea.set_cursor_line_style(Style::default());
+        textarea.set_style(Style::default());
+        textarea.set_block(
+            Block::default()
+                .borders(Borders::ALL)
+                .title("Place bet")
+                .border_style(Style::default().fg(Color::Yellow)),
+        );
+        return false
+    }
+
     match bet {
         Ok(bet) => {
             if bet > app.bank {

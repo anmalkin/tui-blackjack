@@ -94,7 +94,6 @@ pub fn ui(f: &mut Frame, app: &App, form: &mut TextArea) {
             f.render_widget(bet_form, bet_rect);
         }
         GameState::PlayerTurn => {
-            form.delete_line_by_head();
             render_player_cards(f, app, player_cards_rect);
             render_upcard(f, app, dealer_cards_rect);
         }
@@ -127,6 +126,20 @@ pub fn ui(f: &mut Frame, app: &App, form: &mut TextArea) {
             render_dealer_cards(f, app, dealer_cards_rect);
             f.render_widget(Clear, command_rect);
             f.render_widget(lose_text, command_rect);
+        }
+
+        GameState::Blackjack => {
+            let win_text = Paragraph::new(vec![
+                // TODO: Update Blackjack payout
+                Line::from(format!("Blackjack! +${}", app.current_bet)).fg(Color::LightGreen).bold(),
+                Line::from(""),
+                Line::from("Press <Enter> to play again / <q> to quit").fg(Color::Yellow),
+            ])
+            .centered();
+            render_player_cards(f, app, player_cards_rect);
+            render_upcard(f, app, dealer_cards_rect);
+            f.render_widget(Clear, command_rect);
+            f.render_widget(win_text, command_rect);
         }
     }
 }

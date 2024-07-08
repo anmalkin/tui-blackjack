@@ -17,8 +17,8 @@ pub struct App {
 
 impl App {
     pub fn new(bank: u32) -> Self {
-        let player_hand = vec![Card::new(), Card::new()];
-        let dealer_hand = vec![Card::new(), Card::new()];
+        let player_hand = Vec::new();
+        let dealer_hand = Vec::new();
 
         App {
             bank,
@@ -34,16 +34,20 @@ impl App {
         self.state = GameState::PlayerTurn;
     }
 
+    pub fn start(&mut self) {
+        self.player_hand = vec![Card::new(), Card::new()];
+        self.dealer_hand = vec![Card::new(), Card::new()];
+        if calc_hand_score(&self.player_hand) == BLACKJACK {
+            self.state = GameState::Blackjack;
+        } else {
+            self.state = GameState::PlayerTurn;
+        }
+    }
+
     pub fn reset(&mut self) {
         self.current_bet = 0;
         self.player_hand.clear();
-        self.player_hand.push(Card::new());
-        self.player_hand.push(Card::new());
-
         self.dealer_hand.clear();
-        self.dealer_hand.push(Card::new());
-        self.dealer_hand.push(Card::new());
-
         self.state = GameState::EnterBet;
     }
 
@@ -103,6 +107,7 @@ pub enum GameState {
     DealerTurn,
     Win,
     Lose,
+    Blackjack,
 }
 
 #[derive(Debug)]
