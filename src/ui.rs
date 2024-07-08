@@ -127,7 +127,6 @@ pub fn ui(f: &mut Frame, app: &App, form: &mut TextArea) {
             f.render_widget(Clear, command_rect);
             f.render_widget(lose_text, command_rect);
         }
-
         GameState::Blackjack => {
             let win_text = Paragraph::new(vec![
                 Line::from(format!("Blackjack! +${}", app.blackjack_payout)).fg(Color::LightGreen).bold(),
@@ -139,6 +138,18 @@ pub fn ui(f: &mut Frame, app: &App, form: &mut TextArea) {
             render_upcard(f, app, dealer_cards_rect);
             f.render_widget(Clear, command_rect);
             f.render_widget(win_text, command_rect);
+        }
+        GameState::Draw => {
+            let draw_text = Paragraph::new(vec![
+                Line::from("Draw!").fg(Color::Blue).bold(),
+                Line::from(""),
+                Line::from("Press <Enter> to play again / <q> to quit").fg(Color::Yellow),
+            ])
+            .centered();
+            render_player_cards(f, app, player_cards_rect);
+            render_dealer_cards(f, app, dealer_cards_rect);
+            f.render_widget(Clear, command_rect);
+            f.render_widget(draw_text, command_rect);
         }
     }
 }

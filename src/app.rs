@@ -90,6 +90,8 @@ impl App {
                     assert!(self.player_score() <= BLACKJACK);
                     self.state = GameState::Win;
                     self.bank += self.current_bet;
+                } else if self.dealer_score() == self.player_score() {
+                    self.state = GameState::Draw;
                 } else {
                     self.state = GameState::Lose;
                     self.bank -= self.current_bet;
@@ -115,6 +117,7 @@ pub enum GameState {
     Win,
     Lose,
     Blackjack,
+    Draw,
 }
 
 #[derive(Debug)]
