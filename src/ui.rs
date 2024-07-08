@@ -85,49 +85,46 @@ pub fn ui(f: &mut Frame, app: &App, form: &mut TextArea) {
         .style(Style::default().bg(Color::DarkGray));
     f.render_widget(player_block, player_rect);
 
-    let player_sub_rect = centered_rect(100, 25, player_cards_rect);
+    render_player_stats(f, app, player_stats_rect);
 
     match app.state {
         GameState::EnterBet => {
+            let bet_rect = centered_rect(100, 25, player_cards_rect);
             let bet_form = form.widget();
-            render_player_stats(f, app, player_stats_rect);
-            f.render_widget(bet_form, player_sub_rect);
+            f.render_widget(bet_form, bet_rect);
         }
         GameState::PlayerTurn => {
             form.delete_line_by_head();
-            render_cards(f, &app.player_hand, app.player_score(), player_cards_rect);
-            render_upcard(f, app.dealer_hand.first().unwrap(), dealer_cards_rect);
-            render_player_stats(f, app, player_stats_rect);
+            render_player_cards(f, app, player_cards_rect);
+            render_upcard(f, app, dealer_cards_rect);
         }
         GameState::DealerTurn => {
-            render_cards(f, &app.player_hand, app.player_score(), player_cards_rect);
-            render_cards(f, &app.dealer_hand, app.dealer_score(), dealer_cards_rect);
-            render_player_stats(f, app, player_stats_rect);
+            render_player_cards(f, app, player_cards_rect);
+            render_dealer_cards(f, app, dealer_cards_rect);
         }
         GameState::Win => {
             let win_text = Paragraph::new(vec![
-                Line::from("YOU WIN!").fg(Color::LightGreen).bold(),
+                Line::from(format!("You win! +${}", app.current_bet)).fg(Color::LightGreen).bold(),
                 Line::from(""),
                 Line::from("Press <Enter> to play again / <q> to quit").fg(Color::Yellow),
-            ]).centered();
-            render_cards(f, &app.player_hand, app.player_score(), player_cards_rect);
-            render_cards(f, &app.dealer_hand, app.dealer_score(), dealer_cards_rect);
-            render_player_stats(f, app, player_stats_rect);
+            ])
+            .centered();
+            render_player_cards(f, app, player_cards_rect);
+            render_dealer_cards(f, app, dealer_cards_rect);
             f.render_widget(Clear, command_rect);
             f.render_widget(win_text, command_rect);
         }
         GameState::Lose => {
             let lose_text = Paragraph::new(vec![
-                Line::from("Better luck next time")
+                Line::from(format!("Better luck next time. -${}", app.current_bet))
                     .fg(Color::LightRed)
                     .bold(),
                 Line::from(""),
                 Line::from("Press <Enter> to play again / <q> to quit").fg(Color::Yellow),
             ])
             .centered();
-            render_cards(f, &app.player_hand, app.player_score(), player_cards_rect);
-            render_cards(f, &app.dealer_hand, app.dealer_score(), dealer_cards_rect);
-            render_player_stats(f, app, player_stats_rect);
+            render_player_cards(f, app, player_cards_rect);
+            render_dealer_cards(f, app, dealer_cards_rect);
             f.render_widget(Clear, command_rect);
             f.render_widget(lose_text, command_rect);
         }
@@ -157,13 +154,32 @@ fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
         .split(popup_layout[1])[1] // Return the middle chunk
 }
 
-fn render_cards(f: &mut Frame, cards: &[Card], score: u8, rect: Rect) {
+fn render_player_cards(f: &mut Frame, app: &App, rect: Rect) {
     let block = Block::default()
         .title("Current hand")
         .borders(Borders::ALL)
-        .title_bottom(format!("Score: {}", score))
+        .title_bottom(format!("Score: {}", app.player_score()))
         .title_alignment(Alignment::Center);
-    let cards: Vec<Line> = cards.iter().map(|card| display_card(card)).collect();
+    let cards: Vec<Line> = app
+        .player_hand
+        .iter()
+        .map(|card| display_card(card))
+        .collect();
+    let card_view = Paragraph::new(cards).block(block);
+    f.render_widget(card_view, rect);
+}
+
+fn render_dealer_cards(f: &mut Frame, app: &App, rect: Rect) {
+    let block = Block::default()
+        .title("Current hand")
+        .borders(Borders::ALL)
+        .title_bottom(format!("Score: {}", app.dealer_score()))
+        .title_alignment(Alignment::Center);
+    let cards: Vec<Line> = app
+        .dealer_hand
+        .iter()
+        .map(|card| display_card(card))
+        .collect();
     let card_view = Paragraph::new(cards).block(block);
     f.render_widget(card_view, rect);
 }
@@ -175,23 +191,28 @@ fn render_player_stats(f: &mut Frame, app: &App, rect: Rect) {
         .title_alignment(Alignment::Center);
     let stats = Paragraph::new(vec![
         Line::from(format!("Bank: {}", app.bank)),
-        Line::from(format!("Current bet: {}", app.current_bet))
-    ]).block(block);
+        Line::from(format!("Current bet: {}", app.current_bet)),
+    ])
+    .block(block);
     f.render_widget(stats, rect);
 }
 
-fn render_upcard(f: &mut Frame, card: &Card, rect: Rect) {
+fn render_upcard(f: &mut Frame, app: &App, rect: Rect) {
     let block = Block::default()
         .title("Current hand")
         .borders(Borders::ALL)
+        .title_bottom(format!("Showing: {}", app.dealer_showing()))
         .title_alignment(Alignment::Center);
-    let upcard = display_card(card);
-    let hole = Line::from("| HOLE CARD |").centered();
-    let dealer_view = Paragraph::new(vec![upcard, hole]).block(block).centered().alignment(Alignment::Center);
+    let upcard = display_card(app.dealer_hand.first().unwrap());
+    let hole = Line::from("| HOLE CARD |");
+    let dealer_view = Paragraph::new(vec![upcard, hole])
+        .block(block)
+        .centered()
+        .alignment(Alignment::Center);
     f.render_widget(dealer_view, rect);
 }
 
-fn display_card(card: &Card) -> Line<'_> {
+fn display_card(card: &Card) -> Line {
     let color = match card.suit {
         Suit::Hearts => Color::LightRed,
         Suit::Diamonds => Color::LightRed,

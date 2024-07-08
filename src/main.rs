@@ -55,7 +55,12 @@ pub fn run_app<B: Backend>(app: &mut App, terminal: &mut Terminal<B>) -> io::Res
     let mut textarea = TextArea::default();
     textarea.set_cursor_line_style(Style::default());
     textarea.set_style(Style::default());
-    textarea.set_block(Block::default().borders(Borders::ALL).title("Place bet"));
+    textarea.set_block(
+        Block::default()
+            .borders(Borders::ALL)
+            .title("Place bet")
+            .border_style(Style::default().fg(Color::Yellow)),
+    );
     let mut is_valid = true;
 
     loop {
@@ -94,9 +99,11 @@ pub fn run_app<B: Backend>(app: &mut App, terminal: &mut Terminal<B>) -> io::Res
                     KeyCode::Char('s') => app.run(Command::Stand),
                     _ => {}
                 },
-                GameState::DealerTurn => if let KeyCode::Char('q') = key.code {
-                    break
-                },
+                GameState::DealerTurn => {
+                    if let KeyCode::Char('q') = key.code {
+                        break;
+                    }
+                }
                 // Handle both win and lose cases
                 _ => match key.code {
                     KeyCode::Enter => app.reset(),
