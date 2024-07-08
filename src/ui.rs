@@ -1,8 +1,8 @@
 use ratatui::{
-    layout::{Constraint, Direction, Layout, Rect},
+    layout::{Alignment, Constraint, Direction, Layout, Rect},
     style::{Color, Style, Stylize},
     text::{Line, Span},
-    widgets::{Block, Borders, Paragraph},
+    widgets::{Block, Borders, Clear, Paragraph},
     Frame,
 };
 use tui_textarea::TextArea;
@@ -16,10 +16,28 @@ pub fn ui(f: &mut Frame, app: &App, form: &mut TextArea) {
         .constraints([
             Constraint::Min(3),
             Constraint::Percentage(50),
-            Constraint::Min(1),
+            Constraint::Min(3),
             Constraint::Percentage(50),
         ])
         .split(f.size());
+
+    let title_rect = chunks[0];
+    let dealer_rect = centered_rect(75, 75, chunks[1]);
+    let command_rect = chunks[2];
+    let player_rect = centered_rect(75, 75, chunks[3]);
+
+    let dealer_chunks = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([Constraint::Ratio(1, 3); 3])
+        .split(dealer_rect);
+
+    let player_chunks = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([Constraint::Ratio(1, 3); 3])
+        .split(player_rect);
+
+    let dealer_cards_rect = centered_rect(75, 75, dealer_chunks[0]);
+    let player_cards_rect = centered_rect(75, 75, player_chunks[0]);
 
     // Title bar
     let title_block = Block::default()
@@ -34,7 +52,7 @@ pub fn ui(f: &mut Frame, app: &App, form: &mut TextArea) {
     )
     .block(title_block);
 
-    f.render_widget(title, chunks[0]);
+    f.render_widget(title, title_rect);
 
     let command_hint = {
         match app.state {
@@ -49,54 +67,68 @@ pub fn ui(f: &mut Frame, app: &App, form: &mut TextArea) {
     let command_hint =
         Paragraph::new(Line::from(command_hint).centered().bold()).block(Block::default());
 
-    f.render_widget(command_hint, chunks[2]);
+    f.render_widget(command_hint, command_rect);
 
-    let dealer_area = centered_rect(50, 75, chunks[1]);
     let dealer_block = Block::default()
         .title("Dealer")
         .borders(Borders::ALL)
+        .title_alignment(Alignment::Center)
         .style(Style::default().bg(Color::DarkGray));
+    f.render_widget(dealer_block, dealer_rect);
 
-    let player_area = centered_rect(50, 75, chunks[3]);
     let player_block = Block::default()
         .title("Player")
         .borders(Borders::ALL)
+        .title_alignment(Alignment::Center)
         .style(Style::default().bg(Color::DarkGray));
+    f.render_widget(player_block, player_rect);
 
-    let player_sub_area = centered_rect(50, 25, player_area);
+    let player_sub_rect = centered_rect(50, 25, player_rect);
 
     match app.state {
         GameState::EnterBet => {
             let bet_form = form.widget();
-            f.render_widget(player_block, player_area);
-            f.render_widget(dealer_block, dealer_area);
-            f.render_widget(bet_form, player_sub_area);
+            f.render_widget(bet_form, player_sub_rect);
         }
         GameState::PlayerTurn => {
             form.delete_line_by_head();
-            render_dealer(f, app, dealer_area, true);
-            render_player(f, app, player_area);
+            render_cards(f, &app.player_hand, player_cards_rect);
+            render_upcard(f, app.dealer_hand.first().unwrap(), dealer_cards_rect);
         }
         GameState::DealerTurn => {
-            render_dealer(f, app, dealer_area, false);
-            render_player(f, app, player_area);
+            render_cards(f, &app.player_hand, player_cards_rect);
+            render_cards(f, &app.dealer_hand, dealer_cards_rect);
         }
         GameState::Win => {
-            let win_text = Line::from("YOU WIN!").fg(Color::LightGreen).centered();
-            render_player(f, app, player_area);
-            render_dealer(f, app, dealer_area, false);
-            f.render_widget(win_text, player_sub_area);
+            let win_text = Paragraph::new(vec![
+                Line::from("YOU WIN!").fg(Color::LightGreen).bold(),
+                Line::from(""),
+                Line::from("Press <Enter> to play again / <q> to quit").fg(Color::Yellow),
+            ]);
+            render_cards(f, &app.player_hand, player_cards_rect);
+            render_cards(f, &app.dealer_hand, dealer_cards_rect);
+            f.render_widget(Clear, command_rect);
+            f.render_widget(win_text, command_rect);
         }
         GameState::Lose => {
-            let lose_text = Line::from("Better luck next time!").fg(Color::LightRed).centered();
-            render_player(f, app, player_area);
-            render_dealer(f, app, dealer_area, false);
-            f.render_widget(lose_text, player_sub_area);
+            let lose_text = Paragraph::new(vec![
+                Line::from("Better luck next time")
+                    .fg(Color::LightRed)
+                    .bold(),
+                Line::from(""),
+                Line::from("Press <Enter> to play again / <q> to quit").fg(Color::Yellow),
+            ])
+            .centered();
+            render_cards(f, &app.player_hand, player_cards_rect);
+            render_cards(f, &app.dealer_hand, dealer_cards_rect);
+            f.render_widget(Clear, command_rect);
+            f.render_widget(lose_text, command_rect);
         }
     }
 
     // Bank balance
     // TODO: Show bank balance
+    // let bank_rect = centered_rect(50, 25, player_rect);
 }
 
 /// helper function to create a centered rect using up certain percentage of the available rect `r`
@@ -122,45 +154,22 @@ fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
         .split(popup_layout[1])[1] // Return the middle chunk
 }
 
-fn render_player(f: &mut Frame, app: &App, rect: Rect) {
-    let player_block = Block::default()
-        .title("Player")
-        .borders(Borders::ALL)
-        .style(Style::default().bg(Color::DarkGray));
-
-    let mut player_cards: Vec<Line> = Vec::new();
-    for card in &app.player_hand {
-        player_cards.push(display_card(card));
-    }
-    player_cards.push(Line::from(""));
-    player_cards.push(Line::from(format!("Score: {}", app.player_score())));
-    let player_view = Paragraph::new(player_cards).block(player_block);
-    f.render_widget(player_view, rect);
+fn render_cards(f: &mut Frame, cards: &[Card], rect: Rect) {
+    let block = Block::default().title("Current hand").borders(Borders::ALL).title_alignment(Alignment::Center);
+    let cards: Vec<Line> = cards.iter().map(|card| display_card(card)).collect();
+    let card_view = Paragraph::new(cards).block(block);
+    f.render_widget(card_view, rect);
 }
 
-fn render_dealer(f: &mut Frame, app: &App, rect: Rect, hidden: bool) {
-    let dealer_block = Block::default()
-        .title("Dealer")
+fn render_upcard(f: &mut Frame, card: &Card, rect: Rect) {
+    let block = Block::default()
+        .title("Current hand")
         .borders(Borders::ALL)
-        .style(Style::default().bg(Color::DarkGray));
-
-    if hidden {
-        let upcard = display_card(app.dealer_hand.first().unwrap());
-        let hole = Line::from("| HOLE CARD |");
-        let showing = Line::from(format!("Dealer showing: {}", app.dealer_showing()));
-        let blank = Line::from("");
-        let dealer_view = Paragraph::new(vec![upcard, hole, blank, showing]).block(dealer_block);
-        f.render_widget(dealer_view, rect);
-    } else {
-        let mut dealer_cards: Vec<Line> = Vec::new();
-        for card in &app.dealer_hand {
-            dealer_cards.push(display_card(card));
-        }
-        dealer_cards.push(Line::from(" "));
-        dealer_cards.push(Line::from(format!("Dealer score: {}", app.dealer_score())));
-        let dealer_view = Paragraph::new(dealer_cards).block(dealer_block);
-        f.render_widget(dealer_view, rect);
-    }
+        .title_alignment(Alignment::Center);
+    let upcard = display_card(card);
+    let hole = Line::from("| HOLE CARD |");
+    let dealer_view = Paragraph::new(vec![upcard, hole]).block(block);
+    f.render_widget(dealer_view, rect);
 }
 
 fn display_card(card: &Card) -> Line<'_> {
