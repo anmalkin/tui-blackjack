@@ -193,11 +193,15 @@ fn render_player_cards(f: &mut Frame, app: &App, rect: Rect) {
 }
 
 fn render_dealer_cards(f: &mut Frame, app: &App, rect: Rect) {
-    let block = Block::default()
+    let mut block = Block::default()
         .title("Current hand")
         .borders(Borders::ALL)
-        .title_bottom(format!("Score: {}", app.dealer_score()))
         .title_alignment(Alignment::Center);
+    if app.dealer_hand[0].down {
+        block = block.title_bottom(format!("Showing: {}", app.dealer_showing()));
+    } else {
+        block = block.title_bottom(format!("Score: {}", app.dealer_score()));
+    }
     let cards: Vec<Line> = app
         .dealer_hand
         .iter()
@@ -222,7 +226,7 @@ fn render_player_stats(f: &mut Frame, app: &App, rect: Rect) {
 
 fn display_card(card: &Card) -> Line {
     let color = match card.suit {
-        Suit::Hearts => Color::LightRed,
+        Suit::Hearts if !card.down => Color::LightRed,
         Suit::Diamonds => Color::LightRed,
         _ => Color::Gray,
     };

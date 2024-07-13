@@ -61,7 +61,7 @@ impl App {
     }
 
     pub fn dealer_showing(&self) -> u8 {
-        calc_card_score(self.dealer_hand.first().unwrap())
+        calc_card_score(&self.dealer_hand[1])
     }
 
     pub fn dealer_score(&self) -> u8 {
