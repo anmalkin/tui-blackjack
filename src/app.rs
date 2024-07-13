@@ -40,6 +40,7 @@ impl App {
     pub fn start(&mut self) {
         self.player_hand = vec![Card::new(), Card::new()];
         self.dealer_hand = vec![Card::new(), Card::new()];
+        self.dealer_hand[0].face_down();
         if calc_hand_score(&self.player_hand) == BLACKJACK {
             self.state = GameState::Blackjack;
             self.bank += self.blackjack_payout;
@@ -77,9 +78,13 @@ impl App {
                 }
                 if self.player_score() == BLACKJACK {
                     self.state = GameState::DealerTurn;
+                    self.flip_upcard();
                 }
             }
-            Command::Stand => self.state = GameState::DealerTurn,
+            Command::Stand => {
+                self.state = GameState::DealerTurn;
+                self.flip_upcard();
+            },
             Command::AdvanceDealer => {
                 if self.dealer_score() < DEALER_STAND {
                     self.dealer_hand.push(Card::new());
@@ -99,6 +104,10 @@ impl App {
             }
             Command::Split => todo!(),
         }
+    }
+
+    fn flip_upcard(&mut self) {
+        self.dealer_hand[0].face_up();
     }
 }
 
@@ -198,10 +207,12 @@ mod test {
         let jack_of_spades = Card {
             suit: Suit::Spades,
             rank: Rank::Jack,
+            down: false,
         };
         let two_of_diamonds = Card {
             suit: Suit::Diamonds,
             rank: Rank::Pip(2),
+            down: false,
         };
         let hand = vec![jack_of_spades, two_of_diamonds];
         assert_eq!(calc_hand_score(&hand), 12);
@@ -209,10 +220,12 @@ mod test {
         let ace_of_hearts = Card {
             suit: Suit::Hearts,
             rank: Rank::Ace,
+            down: false,
         };
         let king_of_diamonds = Card {
             suit: Suit::Diamonds,
             rank: Rank::King,
+            down: false,
         };
         let hand = vec![ace_of_hearts, king_of_diamonds];
         assert_eq!(calc_hand_score(&hand), 21);
@@ -220,10 +233,12 @@ mod test {
         let ace_of_hearts = Card {
             suit: Suit::Hearts,
             rank: Rank::Ace,
+            down: false,
         };
         let ace_of_spades = Card {
             suit: Suit::Spades,
             rank: Rank::Ace,
+            down: false,
         };
         let hand = vec![ace_of_hearts, ace_of_spades];
         assert_eq!(calc_hand_score(&hand), 12);
@@ -231,10 +246,12 @@ mod test {
         let three_of_hearts = Card {
             suit: Suit::Hearts,
             rank: Rank::Pip(3),
+            down: false,
         };
         let four_of_clubs = Card {
             suit: Suit::Hearts,
             rank: Rank::Pip(4),
+            down: false,
         };
         let hand = vec![three_of_hearts, four_of_clubs];
         assert_eq!(calc_hand_score(&hand), 7);
@@ -245,6 +262,7 @@ mod test {
             cards.push(Card {
                 suit: Suit::Hearts,
                 rank: Rank::Ace,
+            down: false,
             })
         }
         assert_eq!(calc_hand_score(&cards), 12);

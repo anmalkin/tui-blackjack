@@ -95,7 +95,7 @@ pub fn ui(f: &mut Frame, app: &App, form: &mut TextArea) {
         }
         GameState::PlayerTurn => {
             render_player_cards(f, app, player_cards_rect);
-            render_upcard(f, app, dealer_cards_rect);
+            render_dealer_cards(f, app, dealer_cards_rect);
         }
         GameState::DealerTurn => {
             render_player_cards(f, app, player_cards_rect);
@@ -135,7 +135,7 @@ pub fn ui(f: &mut Frame, app: &App, form: &mut TextArea) {
             ])
             .centered();
             render_player_cards(f, app, player_cards_rect);
-            render_upcard(f, app, dealer_cards_rect);
+            render_dealer_cards(f, app, dealer_cards_rect);
             f.render_widget(Clear, command_rect);
             f.render_widget(win_text, command_rect);
         }
@@ -218,21 +218,6 @@ fn render_player_stats(f: &mut Frame, app: &App, rect: Rect) {
     ])
     .block(block);
     f.render_widget(stats, rect);
-}
-
-fn render_upcard(f: &mut Frame, app: &App, rect: Rect) {
-    let block = Block::default()
-        .title("Current hand")
-        .borders(Borders::ALL)
-        .title_bottom(format!("Showing: {}", app.dealer_showing()))
-        .title_alignment(Alignment::Center);
-    let upcard = display_card(app.dealer_hand.first().unwrap());
-    let hole = Line::from("| HOLE CARD |");
-    let dealer_view = Paragraph::new(vec![upcard, hole])
-        .block(block)
-        .centered()
-        .alignment(Alignment::Center);
-    f.render_widget(dealer_view, rect);
 }
 
 fn display_card(card: &Card) -> Line {

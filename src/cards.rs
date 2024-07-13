@@ -26,6 +26,7 @@ pub enum Rank {
 pub struct Card {
     pub suit: Suit,
     pub rank: Rank,
+    pub down: bool,
 }
 
 impl Default for Card {
@@ -53,13 +54,27 @@ impl Card {
             3 => Suit::Clubs,
             _ => panic!("Not a valid suit"),
         };
+        
+        let down = false;
 
-        Card { suit, rank }
+        Card { suit, rank, down }
+    }
+
+    pub fn face_down(&mut self) {
+        self.down = true;
+    }
+
+    pub fn face_up(&mut self) {
+        self.down = false;
     }
 }
 
 impl Display for Card {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if self.down {
+            return write!(f, "| HOLE CARD |");
+        }
+
         let rank = match self.rank {
             Rank::Ace => String::from(" A "),
             Rank::Pip(10) => String::from(" T "),
