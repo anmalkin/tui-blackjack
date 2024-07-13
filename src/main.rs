@@ -53,9 +53,9 @@ fn main() -> Result<(), Box<dyn Error>> {
 
 pub fn run_app<B: Backend>(app: &mut App, terminal: &mut Terminal<B>) -> io::Result<()> {
     let mut textarea = TextArea::default();
-    let mut is_valid = validate(&mut textarea, app);
 
     loop {
+        let is_valid = validate(&mut textarea, app);
         terminal.draw(|f| ui(f, app, &mut textarea))?;
 
         // Run dealer animation
@@ -81,9 +81,8 @@ pub fn run_app<B: Backend>(app: &mut App, terminal: &mut Terminal<B>) -> io::Res
                         KeyCode::Enter => {},
                         _ => {
                             // TextArea::input returns if the input modified its text
-                            if textarea.input(key) {
-                                is_valid = validate(&mut textarea, app);
-                            }
+                            textarea.input(key); 
+                            
                         }
                     }
                 }
