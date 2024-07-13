@@ -78,6 +78,7 @@ pub fn run_app<B: Backend>(app: &mut App, terminal: &mut Terminal<B>) -> io::Res
                             app.place_bet(bet);
                             app.start();
                         }
+                        KeyCode::Enter => {},
                         _ => {
                             // TextArea::input returns if the input modified its text
                             if textarea.input(key) {

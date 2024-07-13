@@ -162,7 +162,8 @@ mod test {
     use super::*;
     #[test]
     fn deal() {
-        let app = App::default();
+        let mut app = App::default();
+        app.start();
         let player_count = app.player_hand.len();
         let dealer_count = app.dealer_hand.len();
         assert_eq!(2, player_count);
@@ -174,6 +175,7 @@ mod test {
     #[test]
     fn hit() {
         let mut app = App::default();
+        app.start();
         app.run(Command::Hit);
         let player_count = app.player_hand.len();
         let dealer_count = app.dealer_hand.len();
@@ -184,6 +186,7 @@ mod test {
     #[test]
     fn stand() {
         let mut app = App::default();
+        app.start();
         let old_player_score = app.player_score();
         app.run(Command::Stand);
         assert_eq!(old_player_score, app.player_score());
