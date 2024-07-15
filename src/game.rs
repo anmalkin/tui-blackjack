@@ -51,14 +51,14 @@ impl Game {
             }
             match &hand.result {
                 Some(res) => match res {
-                    Result::Win | Result::TwentyOne => {
+                    HandResult::Win | HandResult::TwentyOne => {
                         self.bank += hand.bet;
                     },
-                    Result::Bust | Result::Lose => {
+                    HandResult::Bust | HandResult::Lose => {
                         self.bank -= hand.bet;
                     },
-                    Result::Draw => {},
-                    Result::Blackjack => {
+                    HandResult::Draw => {},
+                    HandResult::Blackjack => {
                         self.bank += hand.bet * 3 / 2;
                     },
                 },
@@ -70,7 +70,7 @@ impl Game {
     pub fn execute(&mut self, command: Command) {
         match command {
             Command::Hit => {
-                let hand = self.get_active_hand();
+                let hand = self.get_mut_active_hand();
                 hand.hit();
                 if let Some(_) = hand.result {
                     self.active_hands -= 1;
@@ -82,7 +82,7 @@ impl Game {
             }
 
             Command::Split => {
-                let hand = self.get_active_hand();
+                let hand = self.get_mut_active_hand();
                 let split_hand = hand.split();
                 self.player.push(split_hand);
                 self.active_hands += 1;
@@ -96,7 +96,11 @@ impl Game {
         }
     }
 
-    fn get_active_hand(&mut self) -> &mut Hand {
+    pub fn active_hand(&self) -> &Hand {
+        self.player.get(self.active_hands - 1).unwrap()
+    }
+
+    fn get_mut_active_hand(&mut self) -> &mut Hand {
         self.player.get_mut(self.active_hands - 1).unwrap()
     }
 }
@@ -116,7 +120,7 @@ pub enum State {
 }
 
 #[derive(Debug)]
-pub enum Result {
+pub enum HandResult {
     Win,
     Bust,
     Lose,
@@ -136,15 +140,22 @@ pub enum Command {
 struct Hand {
     cards: Vec<Card>,
     bet: u32,
-    result: Option<Result>,
+    result: Option<HandResult>,
 }
 
 impl Hand {
+    pub fn splittable(&self) -> bool {
+        if self.cards.len() > 2 {
+            return false
+        }
+        self.cards[0].rank == self.cards[1].rank
+    }
+
     fn new(bet: u32) -> Hand {
         let cards = vec![Card::new(), Card::new()];
         let mut result = None;
         if calc_hand_score(&cards) == BLACKJACK {
-            result = Some(Result::Blackjack);
+            result = Some(HandResult::Blackjack);
         }
         Hand { cards, bet, result }
     }
@@ -157,7 +168,7 @@ impl Hand {
         let bet = self.bet;
         let mut result = None;
         if calc_hand_score(&cards) == BLACKJACK {
-            result = Some(Result::Blackjack);
+            result = Some(HandResult::Blackjack);
         }
         Hand { cards, bet, result }
     }
@@ -165,11 +176,11 @@ impl Hand {
     fn hit(&mut self) {
         self.cards.push(Card::new());
         if self.score() > BLACKJACK {
-            self.result = Some(Result::Bust);
+            self.result = Some(HandResult::Bust);
             return;
         }
         if self.score() == BLACKJACK {
-            self.result = Some(Result::TwentyOne);
+            self.result = Some(HandResult::TwentyOne);
         }
     }
 
@@ -180,11 +191,11 @@ impl Hand {
     fn compare(&mut self, dealer_score: u8) {
         let score = self.score();
         if dealer_score > BLACKJACK || score > dealer_score {
-            self.result = Some(Result::Win);
+            self.result = Some(HandResult::Win);
         } else if score < dealer_score {
-            self.result = Some(Result::Lose);
+            self.result = Some(HandResult::Lose);
         } else {
-            self.result = Some(Result::Draw);
+            self.result = Some(HandResult::Draw);
         }
     }
 }

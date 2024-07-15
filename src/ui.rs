@@ -60,8 +60,7 @@ pub fn ui(f: &mut Frame, app: &Game, form: &mut TextArea) {
         match app.state {
             State::Bet => "<Enter> to place bet / <Escape> to quit game",
             State::Play => "<h> to hit / <s> to stand / <q> to quit game",
-            State::Dealer => "Dealer's play...",
-            _ => "<Enter> to play again / <q> to quit",
+            State::Results => "<Enter> to play again / <q> to quit",
         }
     };
 
@@ -94,10 +93,6 @@ pub fn ui(f: &mut Frame, app: &Game, form: &mut TextArea) {
             f.render_widget(bet_form, bet_rect);
         }
         State::Play => {
-            render_player_cards(f, app, player_cards_rect);
-            render_dealer_cards(f, app, dealer_cards_rect);
-        }
-        State::Dealer => {
             render_player_cards(f, app, player_cards_rect);
             render_dealer_cards(f, app, dealer_cards_rect);
         }

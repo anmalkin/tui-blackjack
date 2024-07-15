@@ -1,8 +1,8 @@
-mod game;
 mod cards;
+mod game;
 mod ui;
 
-use std::{error::Error, io, thread::sleep, time::Duration};
+use std::{error::Error, io};
 
 use crossterm::{
     event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode},
@@ -51,55 +51,44 @@ fn main() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-pub fn run_app<B: Backend>(app: &mut Game, terminal: &mut Terminal<B>) -> io::Result<()> {
+pub fn run_app<B: Backend>(game: &mut Game, terminal: &mut Terminal<B>) -> io::Result<()> {
     let mut textarea = TextArea::default();
 
     loop {
-        let is_valid = validate(&mut textarea, app);
-        terminal.draw(|f| ui(f, app, &mut textarea))?;
-
-        // Run dealer animation
-        if let State::Dealer = app.state {
-            sleep(Duration::from_secs(1));
-            app.execute(Command::AdvanceDealer);
-            continue;
-        }
+        let is_valid = validate(&mut textarea, game);
+        terminal.draw(|f| ui(f, game, &mut textarea))?;
 
         if let Event::Key(key) = event::read()? {
             if key.kind == event::KeyEventKind::Release {
                 continue;
             }
-            match app.state {
-                State::Bet => {
-                    match key.code {
-                        KeyCode::Esc => break,
-                        KeyCode::Enter if is_valid => {
-                            let bet = textarea.lines()[0].parse::<u32>().unwrap();
-                            app.place_bet(bet);
-                            app.start();
-                        }
-                        KeyCode::Enter => {},
-                        _ => {
-                            // TextArea::input returns if the input modified its text
-                            textarea.input(key); 
-                            
-                        }
+
+            match game.state {
+                State::Bet => match key.code {
+                    KeyCode::Esc => break,
+                    KeyCode::Enter if is_valid => {
+                        let bet = textarea.lines()[0].parse::<u32>().unwrap();
+                        game.place_bet(bet);
                     }
-                }
-                State::Play => match key.code {
-                    KeyCode::Char('q') => break,
-                    KeyCode::Char('h') => app.execute(Command::Hit),
-                    KeyCode::Char('s') => app.execute(Command::Stand),
-                    _ => {}
+                    KeyCode::Enter => {}
+                    _ => {
+                        textarea.input(key);
+                    }
                 },
-                State::Dealer => {
-                    if let KeyCode::Char('q') = key.code {
-                        break;
+
+                State::Play => {
+                    let splittable = game.active_hand().splittable();
+                    match key.code {
+                        KeyCode::Char('q') => break,
+                        KeyCode::Char('h') => game.execute(Command::Hit),
+                        KeyCode::Char('s') => game.execute(Command::Stand),
+                        KeyCode::Char('p') if splittable => game.execute(Command::Split),
+                        _ => {}
                     }
                 }
-                // Handle both win and lose cases
-                _ => match key.code {
-                    KeyCode::Enter => app.reset(),
+
+                State::Results => match key.code {
+                    KeyCode::Enter => game.reset(),
                     KeyCode::Char('q') => break,
                     _ => {}
                 },
@@ -121,7 +110,7 @@ fn validate(textarea: &mut TextArea, app: &Game) -> bool {
                 .title("Place bet")
                 .border_style(Style::default().fg(Color::Yellow)),
         );
-        return false
+        return false;
     }
 
     match bet {
