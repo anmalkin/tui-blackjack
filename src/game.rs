@@ -53,14 +53,14 @@ impl Game {
                 Some(res) => match res {
                     HandResult::Win | HandResult::TwentyOne => {
                         self.bank += hand.bet;
-                    },
+                    }
                     HandResult::Bust | HandResult::Lose => {
                         self.bank -= hand.bet;
-                    },
-                    HandResult::Draw => {},
+                    }
+                    HandResult::Draw => {}
                     HandResult::Blackjack => {
                         self.bank += hand.bet * 3 / 2;
-                    },
+                    }
                 },
                 None => panic!("None result found in hand after running dealer"),
             }
@@ -70,7 +70,7 @@ impl Game {
     pub fn execute(&mut self, command: Command) {
         match command {
             Command::Hit => {
-                let hand = self.get_mut_active_hand();
+                let hand = self.player.get_mut(self.active_hands - 1).unwrap();
                 hand.hit();
                 if let Some(_) = hand.result {
                     self.active_hands -= 1;
@@ -82,7 +82,7 @@ impl Game {
             }
 
             Command::Split => {
-                let hand = self.get_mut_active_hand();
+                let hand = self.player.get_mut(self.active_hands - 1).unwrap();
                 let split_hand = hand.split();
                 self.player.push(split_hand);
                 self.active_hands += 1;
@@ -98,10 +98,6 @@ impl Game {
 
     pub fn active_hand(&self) -> &Hand {
         self.player.get(self.active_hands - 1).unwrap()
-    }
-
-    fn get_mut_active_hand(&mut self) -> &mut Hand {
-        self.player.get_mut(self.active_hands - 1).unwrap()
     }
 }
 
@@ -146,7 +142,7 @@ struct Hand {
 impl Hand {
     pub fn splittable(&self) -> bool {
         if self.cards.len() > 2 {
-            return false
+            return false;
         }
         self.cards[0].rank == self.cards[1].rank
     }
