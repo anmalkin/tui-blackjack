@@ -1,4 +1,4 @@
-mod app;
+mod game;
 mod cards;
 mod ui;
 
@@ -19,7 +19,7 @@ use ratatui::{
 
 use tui_textarea::TextArea;
 
-use crate::app::*;
+use crate::game::*;
 use crate::ui::ui;
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -32,7 +32,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut terminal = Terminal::new(backend)?;
 
     // create app and run it
-    let mut app = App::default();
+    let mut app = Game::default();
     let res = run_app(&mut app, &mut terminal);
 
     // restore terminal
@@ -51,7 +51,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-pub fn run_app<B: Backend>(app: &mut App, terminal: &mut Terminal<B>) -> io::Result<()> {
+pub fn run_app<B: Backend>(app: &mut Game, terminal: &mut Terminal<B>) -> io::Result<()> {
     let mut textarea = TextArea::default();
 
     loop {
@@ -59,9 +59,9 @@ pub fn run_app<B: Backend>(app: &mut App, terminal: &mut Terminal<B>) -> io::Res
         terminal.draw(|f| ui(f, app, &mut textarea))?;
 
         // Run dealer animation
-        if let GameState::DealerTurn = app.state {
+        if let State::Dealer = app.state {
             sleep(Duration::from_secs(1));
-            app.run(Command::AdvanceDealer);
+            app.execute(Command::AdvanceDealer);
             continue;
         }
 
@@ -70,7 +70,7 @@ pub fn run_app<B: Backend>(app: &mut App, terminal: &mut Terminal<B>) -> io::Res
                 continue;
             }
             match app.state {
-                GameState::EnterBet => {
+                State::Start => {
                     match key.code {
                         KeyCode::Esc => break,
                         KeyCode::Enter if is_valid => {
@@ -86,13 +86,13 @@ pub fn run_app<B: Backend>(app: &mut App, terminal: &mut Terminal<B>) -> io::Res
                         }
                     }
                 }
-                GameState::PlayerTurn => match key.code {
+                State::Player => match key.code {
                     KeyCode::Char('q') => break,
-                    KeyCode::Char('h') => app.run(Command::Hit),
-                    KeyCode::Char('s') => app.run(Command::Stand),
+                    KeyCode::Char('h') => app.execute(Command::Hit),
+                    KeyCode::Char('s') => app.execute(Command::Stand),
                     _ => {}
                 },
-                GameState::DealerTurn => {
+                State::Dealer => {
                     if let KeyCode::Char('q') = key.code {
                         break;
                     }
@@ -109,7 +109,7 @@ pub fn run_app<B: Backend>(app: &mut App, terminal: &mut Terminal<B>) -> io::Res
     Ok(())
 }
 
-fn validate(textarea: &mut TextArea, app: &App) -> bool {
+fn validate(textarea: &mut TextArea, app: &Game) -> bool {
     let bet = textarea.lines()[0].parse::<u32>();
 
     if textarea.is_empty() {
