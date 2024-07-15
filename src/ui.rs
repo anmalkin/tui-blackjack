@@ -58,8 +58,8 @@ pub fn ui(f: &mut Frame, app: &Game, form: &mut TextArea) {
 
     let command_hint = {
         match app.state {
-            State::Start => "<Enter> to place bet / <Escape> to quit game",
-            State::Player => "<h> to hit / <s> to stand / <q> to quit game",
+            State::Bet => "<Enter> to place bet / <Escape> to quit game",
+            State::Play => "<h> to hit / <s> to stand / <q> to quit game",
             State::Dealer => "Dealer's play...",
             _ => "<Enter> to play again / <q> to quit",
         }
@@ -88,12 +88,12 @@ pub fn ui(f: &mut Frame, app: &Game, form: &mut TextArea) {
     render_player_stats(f, app, player_stats_rect);
 
     match app.state {
-        State::Start => {
+        State::Bet => {
             let bet_rect = centered_rect(100, 25, player_cards_rect);
             let bet_form = form.widget();
             f.render_widget(bet_form, bet_rect);
         }
-        State::Player => {
+        State::Play => {
             render_player_cards(f, app, player_cards_rect);
             render_dealer_cards(f, app, dealer_cards_rect);
         }

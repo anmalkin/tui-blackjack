@@ -70,7 +70,7 @@ pub fn run_app<B: Backend>(app: &mut Game, terminal: &mut Terminal<B>) -> io::Re
                 continue;
             }
             match app.state {
-                State::Start => {
+                State::Bet => {
                     match key.code {
                         KeyCode::Esc => break,
                         KeyCode::Enter if is_valid => {
@@ -86,7 +86,7 @@ pub fn run_app<B: Backend>(app: &mut Game, terminal: &mut Terminal<B>) -> io::Re
                         }
                     }
                 }
-                State::Player => match key.code {
+                State::Play => match key.code {
                     KeyCode::Char('q') => break,
                     KeyCode::Char('h') => app.execute(Command::Hit),
                     KeyCode::Char('s') => app.execute(Command::Stand),
