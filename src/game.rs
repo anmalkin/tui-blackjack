@@ -147,6 +147,10 @@ impl Hand {
         self.cards[0].rank == self.cards[1].rank
     }
 
+    pub fn bet(&self) -> u32 {
+        self.bet
+    }
+
     fn new(bet: u32) -> Hand {
         let cards = vec![Card::new(), Card::new()];
         let mut result = None;

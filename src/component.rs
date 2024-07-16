@@ -4,8 +4,6 @@ use ratatui::{
     Frame,
 };
 
-use crate::cards::Card;
-
 pub struct Component<'a> {
     widget: Paragraph<'a>,
     block: Block<'a>,

@@ -1,6 +1,8 @@
 mod cards;
 mod game;
 mod ui;
+mod component;
+mod screen;
 
 use std::{error::Error, io};
 

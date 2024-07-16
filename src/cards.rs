@@ -82,6 +82,6 @@ impl Display for Card {
             Suit::Clubs => CLUB_UNICODE,
         };
 
-        write!(f, "| {}  {}  {} |", suit, rank, suit)
+        write!(f, "{} {} {}", suit, rank, suit)
     }
 }
