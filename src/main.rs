@@ -1,8 +1,6 @@
 mod cards;
 mod game;
 mod ui;
-mod component;
-mod screen;
 
 use std::{error::Error, io};
 
@@ -79,7 +77,7 @@ pub fn run_app<B: Backend>(game: &mut Game, terminal: &mut Terminal<B>) -> io::R
                 },
 
                 State::Play => {
-                    let splittable = game.active_hand().splittable();
+                    let splittable = game.splittable();
                     match key.code {
                         KeyCode::Char('q') => break,
                         KeyCode::Char('h') => game.execute(Command::Hit),

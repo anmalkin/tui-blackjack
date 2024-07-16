@@ -9,10 +9,10 @@ const DEALER_STAND: u8 = 17;
 #[derive(Debug)]
 pub struct Game {
     pub bank: u32,
-    pub player: Vec<Hand>,
-    pub dealer: Dealer,
+    player: Vec<Hand>,
+    dealer: Dealer,
     pub state: State,
-    active_hands: usize,
+    pub active_hands: usize,
 }
 
 impl Game {
@@ -43,36 +43,13 @@ impl Game {
         self.state = State::Bet;
     }
 
-    fn calc_results(&mut self) {
-        let dealer_score = self.dealer.score();
-        for hand in &mut self.player {
-            if let None = hand.result {
-                hand.compare(dealer_score);
-            }
-            match &hand.result {
-                Some(res) => match res {
-                    HandResult::Win | HandResult::TwentyOne => {
-                        self.bank += hand.bet;
-                    }
-                    HandResult::Bust | HandResult::Lose => {
-                        self.bank -= hand.bet;
-                    }
-                    HandResult::Draw => {}
-                    HandResult::Blackjack => {
-                        self.bank += hand.bet * 3 / 2;
-                    }
-                },
-                None => panic!("None result found in hand after running dealer"),
-            }
-        }
-    }
 
     pub fn execute(&mut self, command: Command) {
         match command {
             Command::Hit => {
                 let hand = self.player.get_mut(self.active_hands - 1).unwrap();
                 hand.hit();
-                if let Some(_) = hand.result {
+                if hand.result.is_some() {
                     self.active_hands -= 1;
                 }
             }
@@ -98,6 +75,38 @@ impl Game {
 
     pub fn active_hand(&self) -> &Hand {
         self.player.get(self.active_hands - 1).unwrap()
+    }
+
+    pub fn splittable(&self) -> bool {
+        let hand = self.active_hand();
+        if hand.cards.len() > 2 {
+            return false;
+        }
+        hand.cards[0].rank == hand.cards[1].rank
+    }
+
+    fn calc_results(&mut self) {
+        let dealer_score = self.dealer.score();
+        for hand in &mut self.player {
+            if hand.result.is_none() {
+                hand.compare(dealer_score);
+            }
+            match &hand.result {
+                Some(res) => match res {
+                    HandResult::Win | HandResult::TwentyOne => {
+                        self.bank += hand.bet;
+                    }
+                    HandResult::Bust | HandResult::Lose => {
+                        self.bank -= hand.bet;
+                    }
+                    HandResult::Draw => {}
+                    HandResult::Blackjack => {
+                        self.bank += hand.bet * 3 / 2;
+                    }
+                },
+                None => panic!("None result found in hand after running dealer"),
+            }
+        }
     }
 }
 
@@ -133,10 +142,10 @@ pub enum Command {
 }
 
 #[derive(Debug)]
-struct Hand {
-    cards: Vec<Card>,
-    bet: u32,
-    result: Option<HandResult>,
+pub struct Hand {
+    pub cards: Vec<Card>,
+    pub bet: u32,
+    pub result: Option<HandResult>,
 }
 
 impl Hand {
