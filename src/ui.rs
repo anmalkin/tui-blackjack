@@ -96,12 +96,15 @@ pub fn ui(f: &mut Frame, game: &Game, form: &mut TextArea) {
         }
         State::Play if game.splittable() => {
             command_hint = "<h> to hit / <s> to stand / <p> to split / <q> to quit game";
+            render_player_cards(f, game, player_rect);
         }
         State::Play => {
             command_hint = "<h> to hit / <s> to stand / <q> to quit game";
+            render_player_cards(f, game, player_rect);
         }
         State::Results => {
             command_hint = "<Enter> to play again / <q> to quit";
+            render_player_cards(f, game, player_rect);
         }
     }
 
@@ -135,6 +138,38 @@ fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
         .split(popup_layout[1])[1] // Return the middle chunk
 }
 
+fn render_player_cards(f: &mut Frame, game: &Game, rect: Rect) {
+    let block = Block::default()
+        .title("Current hand")
+        .borders(Borders::ALL)
+        .title_bottom(format!("Score: {}", game.active_hand().score()))
+        .title_alignment(Alignment::Center);
+    let cards: Vec<Line> = game
+        .active_hand()
+        .cards
+        .iter()
+        .map(|card| display_card(card))
+        .collect();
+    let card_view = Paragraph::new(cards).block(block);
+    f.render_widget(card_view, rect);
+}
+
+fn render_dealer_cards(f: &mut Frame, game: &Game, rect: Rect) {
+    let mut block = Block::default()
+        .title("Current hand")
+        .borders(Borders::ALL)
+        .title_bottom(format!("Score: {}", game.dealer.score()))
+        .title_alignment(Alignment::Center);
+    let cards: Vec<Line> = game
+        .dealer
+        .hand
+        .iter()
+        .map(|card| display_card(card))
+        .collect();
+    let card_view = Paragraph::new(cards).block(block);
+    f.render_widget(card_view, rect);
+}
+
 fn display_card(card: &Card) -> Line {
     let color = match card.suit {
         Suit::Hearts => Color::LightRed,
@@ -143,3 +178,4 @@ fn display_card(card: &Card) -> Line {
     };
     Line::from(format!("{}", card)).fg(color).bold().centered()
 }
+

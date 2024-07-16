@@ -9,8 +9,8 @@ const DEALER_STAND: u8 = 17;
 #[derive(Debug)]
 pub struct Game {
     pub bank: u32,
-    player: Vec<Hand>,
-    dealer: Dealer,
+    pub player: Vec<Hand>,
+    pub dealer: Dealer,
     pub state: State,
     pub active_hands: usize,
 }
@@ -42,7 +42,6 @@ impl Game {
         self.active_hands = 1;
         self.state = State::Bet;
     }
-
 
     pub fn execute(&mut self, command: Command) {
         match command {
@@ -160,6 +159,10 @@ impl Hand {
         self.bet
     }
 
+    pub fn score(&self) -> u8 {
+        calc_hand_score(&self.cards)
+    }
+
     fn new(bet: u32) -> Hand {
         let cards = vec![Card::new(), Card::new()];
         let mut result = None;
@@ -193,10 +196,6 @@ impl Hand {
         }
     }
 
-    fn score(&self) -> u8 {
-        calc_hand_score(&self.cards)
-    }
-
     fn compare(&mut self, dealer_score: u8) {
         let score = self.score();
         if dealer_score > BLACKJACK || score > dealer_score {
@@ -210,8 +209,8 @@ impl Hand {
 }
 
 #[derive(Debug)]
-struct Dealer {
-    hand: Vec<Card>,
+pub struct Dealer {
+    pub hand: Vec<Card>,
 }
 
 impl Dealer {
@@ -236,6 +235,12 @@ impl Dealer {
 
     pub fn reset(&mut self) {
         self.hand.clear();
+    }
+}
+
+impl Default for Dealer {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
