@@ -64,7 +64,7 @@ pub fn run_app<B: Backend>(game: &mut Game, terminal: &mut Terminal<B>) -> io::R
             }
 
             match game.state {
-                State::Bet => match key.code {
+                GameState::Bet => match key.code {
                     KeyCode::Esc => break,
                     KeyCode::Enter if is_valid => {
                         let bet = textarea.lines()[0].parse::<u32>().unwrap();
@@ -76,7 +76,7 @@ pub fn run_app<B: Backend>(game: &mut Game, terminal: &mut Terminal<B>) -> io::R
                     }
                 },
 
-                State::Play => {
+                GameState::Play => {
                     let splittable = game.splittable();
                     match key.code {
                         KeyCode::Char('q') => break,
@@ -87,7 +87,7 @@ pub fn run_app<B: Backend>(game: &mut Game, terminal: &mut Terminal<B>) -> io::R
                     }
                 }
 
-                State::Results => match key.code {
+                GameState::Results => match key.code {
                     KeyCode::Enter => game.reset(),
                     KeyCode::Char('q') => break,
                     _ => {}

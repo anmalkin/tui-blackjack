@@ -11,7 +11,7 @@ pub struct Game {
     pub bank: u32,
     pub player: Vec<Hand>,
     pub dealer: Dealer,
-    pub state: State,
+    pub state: GameState,
     pub active_hands: usize,
 }
 
@@ -19,7 +19,7 @@ impl Game {
     pub fn new(bank: u32) -> Self {
         let player = Vec::new();
         let dealer = Dealer::new();
-        let state = State::Bet;
+        let state = GameState::Bet;
         let active_hands = 1;
 
         Game {
@@ -33,14 +33,14 @@ impl Game {
 
     pub fn place_bet(&mut self, bet: u32) {
         self.player.push(Hand::new(bet));
-        self.state = State::Play;
+        self.state = GameState::Play;
     }
 
     pub fn reset(&mut self) {
         self.player.clear();
         self.dealer.reset();
         self.active_hands = 1;
-        self.state = State::Bet;
+        self.state = GameState::Bet;
     }
 
     pub fn execute(&mut self, command: Command) {
@@ -63,7 +63,7 @@ impl Game {
         if self.active_hands == 0 {
             self.dealer.run();
             self.calc_results();
-            self.state = State::Results;
+            self.state = GameState::Results;
         }
     }
 
@@ -113,7 +113,7 @@ impl Default for Game {
 }
 
 #[derive(Debug)]
-pub enum State {
+pub enum GameState {
     Bet,
     Play,
     Results,

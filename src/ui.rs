@@ -88,21 +88,21 @@ pub fn ui(f: &mut Frame, game: &Game, form: &mut TextArea) {
     let command_hint: &str;
 
     match game.state {
-        State::Bet => {
+        GameState::Bet => {
             f.render_widget(bet_form, bet_rect);
             command_hint = "<Enter> to place bet / <Escape> to quit game";
         }
-        State::Play if game.splittable() => {
+        GameState::Play if game.splittable() => {
             command_hint = "<h> to hit / <s> to stand / <p> to split / <q> to quit game";
             render_player_cards(f, game, player_rect);
             render_upcard(f, game, dealer_rect);
         }
-        State::Play => {
+        GameState::Play => {
             command_hint = "<h> to hit / <s> to stand / <q> to quit game";
             render_player_cards(f, game, player_rect);
             render_upcard(f, game, dealer_rect);
         }
-        State::Results => {
+        GameState::Results => {
             command_hint = "<Enter> to play again / <q> to quit";
             render_player_cards(f, game, player_rect);
             render_dealer_cards(f, game, dealer_rect);
