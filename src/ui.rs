@@ -35,7 +35,7 @@ pub fn ui(f: &mut Frame, game: &Game, form: &mut TextArea) {
     let bottom_chunks = Layout::default()
         .direction(Direction::Horizontal)
         .constraints([Constraint::Ratio(1, 3); 3])
-        .split(centered_rect(75, 75, top));
+        .split(centered_rect(75, 75, bottom));
 
     // Title
     let title_block = Block::default()
@@ -58,10 +58,6 @@ pub fn ui(f: &mut Frame, game: &Game, form: &mut TextArea) {
         .style(Style::default().bg(Color::DarkGray));
     let dealer_rect = centered_rect(75, 75, top_chunks[1]);
     f.render_widget(dealer_block, dealer_rect);
-
-    // Commands
-    let middle = chunks[2];
-    let command_hint: &str; 
 
     // Player
     let player_block = Block::default()
@@ -89,6 +85,8 @@ pub fn ui(f: &mut Frame, game: &Game, form: &mut TextArea) {
     let bet_form = form.widget();
 
     // Conditional rendering
+    let command_hint: &str;
+
     match game.state {
         State::Bet => {
             f.render_widget(bet_form, bet_rect);
@@ -97,14 +95,17 @@ pub fn ui(f: &mut Frame, game: &Game, form: &mut TextArea) {
         State::Play if game.splittable() => {
             command_hint = "<h> to hit / <s> to stand / <p> to split / <q> to quit game";
             render_player_cards(f, game, player_rect);
+            render_upcard(f, game, dealer_rect);
         }
         State::Play => {
             command_hint = "<h> to hit / <s> to stand / <q> to quit game";
             render_player_cards(f, game, player_rect);
+            render_upcard(f, game, dealer_rect);
         }
         State::Results => {
             command_hint = "<Enter> to play again / <q> to quit";
             render_player_cards(f, game, player_rect);
+            render_dealer_cards(f, game, dealer_rect);
         }
     }
 
@@ -155,7 +156,7 @@ fn render_player_cards(f: &mut Frame, game: &Game, rect: Rect) {
 }
 
 fn render_dealer_cards(f: &mut Frame, game: &Game, rect: Rect) {
-    let mut block = Block::default()
+    let block = Block::default()
         .title("Current hand")
         .borders(Borders::ALL)
         .title_bottom(format!("Score: {}", game.dealer.score()))
@@ -170,6 +171,20 @@ fn render_dealer_cards(f: &mut Frame, game: &Game, rect: Rect) {
     f.render_widget(card_view, rect);
 }
 
+fn render_upcard(f: &mut Frame, game: &Game, rect: Rect) {
+    let block = Block::default()
+        .title("Current hand")
+        .borders(Borders::ALL)
+        .title_bottom(format!("Showing: {}", game.dealer.showing()))
+        .title_alignment(Alignment::Center);
+    let cards = vec![
+        Line::from("*****").fg(Color::Gray).bold().centered(),
+        display_card(&game.dealer.hand[1]),
+    ];
+    let card_view = Paragraph::new(cards).block(block);
+    f.render_widget(card_view, rect);
+}
+
 fn display_card(card: &Card) -> Line {
     let color = match card.suit {
         Suit::Hearts => Color::LightRed,
@@ -178,4 +193,3 @@ fn display_card(card: &Card) -> Line {
     };
     Line::from(format!("{}", card)).fg(color).bold().centered()
 }
-

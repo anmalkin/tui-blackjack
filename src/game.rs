@@ -48,14 +48,9 @@ impl Game {
             Command::Hit => {
                 let hand = self.player.get_mut(self.active_hands - 1).unwrap();
                 hand.hit();
-                if hand.result.is_some() {
-                    self.active_hands -= 1;
-                }
             }
 
-            Command::Stand => {
-                self.active_hands -= 1;
-            }
+            Command::Stand => {}
 
             Command::Split => {
                 let hand = self.player.get_mut(self.active_hands - 1).unwrap();
@@ -73,6 +68,7 @@ impl Game {
     }
 
     pub fn active_hand(&self) -> &Hand {
+        // FIXME: Panic happens here when UI calls before bet is made
         self.player.get(self.active_hands - 1).unwrap()
     }
 
