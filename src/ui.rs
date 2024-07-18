@@ -75,7 +75,6 @@ pub fn ui(f: &mut Frame, game: &Game, form: &mut TextArea) {
         .title_alignment(Alignment::Center);
     let stats_widget = Paragraph::new(vec![
         Line::from(format!("Bank: {}", game.bank)),
-        Line::from(format!("Current bet: {}", game.active_hand().bet())),
     ])
     .block(stats_block);
     f.render_widget(stats_widget, stats_rect);
@@ -96,6 +95,17 @@ pub fn ui(f: &mut Frame, game: &Game, form: &mut TextArea) {
             command_hint = "<h> to hit / <s> to stand / <p> to split / <q> to quit game";
             render_player_cards(f, game, player_rect);
             render_upcard(f, game, dealer_rect);
+
+            let stats_block = Block::default()
+                .title("Player stats")
+                .borders(Borders::ALL)
+                .title_alignment(Alignment::Center);
+            let stats_widget = Paragraph::new(vec![
+                Line::from(format!("Bank: {}", game.bank)),
+                Line::from(format!("Current bet: {}", game.active_hand().bet())),
+            ])
+            .block(stats_block);
+            f.render_widget(stats_widget, stats_rect);
         }
         GameState::Play => {
             command_hint = "<h> to hit / <s> to stand / <q> to quit game";
